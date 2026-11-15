@@ -1,0 +1,265 @@
+# The curriculum map. Order here = learning order (drives prev/next navigation).
+#
+# A concept becomes a full lesson when  curriculum/<subject>/<concept-slug>.md  exists
+# (and gets a quiz from  <concept-slug>.quiz.yml). Until then it is listed as "planned".
+# Slugs are permanent IDs for your progress — rename titles freely, never change slugs.
+
+paths:
+  - slug: java-backend
+    title: Java Backend Developer
+    description: From first principles to interview-ready backend engineer.
+    subjects:
+
+      # ------------------------------------------------------------------ CORE JAVA
+      - slug: java
+        title: Core Java
+        description: The language and the runtime underneath it — how Java really works.
+        chapters:
+          - slug: fundamentals
+            title: Fundamentals & the JVM
+            concepts:
+              - jdk-jre-jvm: JDK, JRE and JVM
+              - jvm-architecture: JVM architecture
+              - data-types-variables: Data types and variables
+              - operators: Operators and expressions
+          - slug: oop
+            title: Object-Oriented Programming
+            concepts:
+              - oop-principles: OOP principles
+              - classes-objects-constructors: Classes, objects and constructors
+              - inheritance: Inheritance
+              - polymorphism: Polymorphism
+              - abstraction-encapsulation: Abstraction and encapsulation
+              - interfaces-vs-abstract-classes: Interfaces vs abstract classes
+          - slug: strings
+            title: Strings
+            concepts:
+              - string-immutability: Strings and immutability
+              - stringbuilder: StringBuilder and StringBuffer
+          - slug: exceptions
+            title: Exception Handling
+            concepts:
+              - exception-hierarchy: Exception hierarchy
+              - checked-vs-unchecked: Checked vs unchecked exceptions
+              - try-with-resources: try-with-resources
+          - slug: collections
+            title: Collections Framework
+            concepts:
+              - collections-overview: Collections Framework overview
+              - list-arraylist-linkedlist: List, ArrayList and LinkedList
+              - set-implementations: Set implementations
+              - map-overview: Map implementations
+              - equals-hashcode: equals() and hashCode()
+              - hashmap-internals: HashMap internal implementation
+              - queue-deque: Queue and Deque
+              - comparable-comparator: Comparable and Comparator
+              - fail-fast-fail-safe: Fail-fast vs fail-safe iterators
+          - slug: generics
+            title: Generics
+            concepts:
+              - generics-basics: Generics basics
+              - type-erasure: Type erasure
+              - wildcards-pecs: Wildcards and PECS
+          - slug: java8
+            title: Java 8 and Functional Programming
+            concepts:
+              - lambda-expressions: Lambda expressions
+              - functional-interfaces: Functional interfaces
+              - method-references: Method references
+              - stream-api: Stream API
+              - stream-internals: Stream internals and laziness
+              - optional: Optional
+          - slug: concurrency
+            title: Multithreading and Concurrency
+            concepts:
+              - threads-basics: Threads and the thread lifecycle
+              - synchronization: synchronized and intrinsic locks
+              - volatile-jmm: volatile and the Java Memory Model
+              - locks: Lock, ReentrantLock and ReadWriteLock
+              - executor-service: ExecutorService and thread pools
+              - concurrent-collections: Concurrent collections
+              - completable-future: CompletableFuture
+              - virtual-threads: Virtual threads
+          - slug: jvm-internals
+            title: JVM Internals
+            concepts:
+              - jvm-memory: JVM memory areas
+              - garbage-collection: Garbage collection
+              - class-loading: Class loading
+              - reflection: Reflection
+              - annotations: Annotations
+          - slug: modern-java
+            title: Modern Java
+            concepts:
+              - records: Records
+              - sealed-classes: Sealed classes
+              - pattern-matching: Pattern matching (instanceof and switch)
+              - text-blocks-var: var and text blocks
+
+      # ------------------------------------------------------------------ SPRING
+      - slug: spring
+        title: Spring & Spring Boot
+        description: Dependency injection to production-grade REST APIs, data access and security.
+        chapters:
+          - slug: spring-core
+            title: Spring Framework Core
+            concepts:
+              - why-spring: Why Spring was introduced
+              - ioc-di: Inversion of Control and Dependency Injection
+              - spring-container: The Spring container and ApplicationContext
+              - bean-lifecycle: Bean lifecycle
+              - bean-scopes: Bean scopes
+              - component-scanning-config: Component scanning and configuration
+              - autowiring: Autowiring
+              - spring-aop: Spring AOP
+              - spring-proxies: Proxies (JDK dynamic vs CGLIB)
+              - spring-mvc: Spring MVC and the DispatcherServlet
+          - slug: spring-boot
+            title: Spring Boot
+            concepts:
+              - why-spring-boot: Why Spring Boot exists
+              - auto-configuration: Auto-configuration internals
+              - starters: Starter dependencies
+              - boot-lifecycle: Spring Boot application lifecycle
+              - properties-yaml-profiles: Properties, YAML and profiles
+              - rest-controllers: REST API development
+              - layered-architecture: Controllers, services and repositories
+              - dtos-mapping: DTOs and entity mapping
+              - validation: Validation
+              - global-exception-handling: Global exception handling
+              - logging: Logging
+              - actuator: Actuator
+              - testing-spring-boot: Testing Spring Boot applications
+          - slug: data-jpa
+            title: Spring Data JPA and Hibernate
+            concepts:
+              - jpa-basics: JPA and Spring Data JPA
+              - hibernate-internals: Hibernate internals and the persistence context
+              - transactions-spring: Transactions and @Transactional
+              - lazy-eager-loading: Lazy and eager loading
+              - n-plus-one: The N+1 query problem
+              - pagination-sorting: Pagination and sorting
+              - connection-pooling-hikari: Connection pooling with HikariCP
+          - slug: spring-security
+            title: Spring Security
+            concepts:
+              - authn-vs-authz: Authentication and authorization
+              - security-filter-chain: The security filter chain
+              - security-context: SecurityContext
+              - password-encoding: Password encoding
+              - jwt-auth: JWT authentication
+              - oauth2: OAuth 2.0
+              - rbac-method-security: Role-based and method-level security
+              - cors-csrf: CORS and CSRF
+
+      # ------------------------------------------------------------------ BACKEND ENGINEERING
+      - slug: backend
+        title: Backend Engineering
+        description: Networking, APIs, databases, messaging and distributed-systems building blocks.
+        chapters:
+          - slug: web-fundamentals
+            title: Web and Networking Fundamentals
+            concepts:
+              - http-https: HTTP and HTTPS
+              - http-methods-status: HTTP methods and status codes
+              - dns-tcp-ip: DNS and TCP/IP
+              - cookies-sessions-tokens: Cookies, sessions and tokens
+              - reverse-proxy-load-balancer: Reverse proxies and load balancers
+          - slug: api-design
+            title: API Design
+            concepts:
+              - rest-api-design: REST API design
+              - api-versioning: API versioning
+              - idempotency: Idempotency
+              - rate-limiting: Rate limiting
+          - slug: databases
+            title: Databases
+            concepts:
+              - relational-concepts: Relational database concepts
+              - sql-essentials: SQL essentials
+              - indexing: Database indexing
+              - query-optimization: Query optimization
+              - acid: ACID properties
+              - isolation-levels: Isolation levels
+              - normalization: Normalization and denormalization
+          - slug: caching
+            title: Caching
+            concepts:
+              - caching-strategies: Caching strategies
+              - redis: Redis fundamentals
+          - slug: messaging
+            title: Messaging
+            concepts:
+              - sync-vs-async: Synchronous vs asynchronous communication
+              - message-queues: Message queues
+              - kafka: Kafka fundamentals
+              - rabbitmq: RabbitMQ fundamentals
+          - slug: microservices
+            title: Microservices and Resilience
+            concepts:
+              - microservices-architecture: Microservices architecture
+              - service-discovery: Service discovery
+              - api-gateway: API gateways
+              - distributed-transactions: Distributed transactions and sagas
+              - event-driven-architecture: Event-driven architecture
+              - retries-circuit-breakers: Retries and circuit breakers
+              - observability: "Observability: logs, metrics and traces"
+          - slug: delivery
+            title: Delivery and Operations
+            concepts:
+              - git-github: Git and GitHub
+              - docker: Docker
+              - ci-cd: CI/CD
+              - cloud-fundamentals: Cloud fundamentals
+              - deployment-monitoring: Deployment and monitoring
+
+      # ------------------------------------------------------------------ SYSTEM DESIGN
+      - slug: system-design
+        title: System Design
+        description: Low-level object design and high-level distributed architecture.
+        chapters:
+          - slug: lld-principles
+            title: Low-Level Design Principles
+            concepts:
+              - solid: SOLID principles
+              - design-patterns-creational: Creational design patterns
+              - design-patterns-structural: Structural design patterns
+              - design-patterns-behavioral: Behavioral design patterns
+              - uml-class-diagrams: UML and class diagrams
+              - composition-vs-inheritance: Composition vs inheritance
+              - clean-code: Clean code and maintainable architecture
+          - slug: lld-problems
+            title: LLD Practice Problems
+            concepts:
+              - lld-parking-lot: Parking Lot
+              - lld-library-management: Library Management System
+              - lld-atm: ATM
+              - lld-elevator: Elevator System
+              - lld-food-ordering: Food Ordering System
+              - lld-notification-service: Notification Service
+              - lld-payment-processing: Payment Processing System
+          - slug: hld-fundamentals
+            title: High-Level Design Fundamentals
+            concepts:
+              - requirements-nfr: Functional and non-functional requirements
+              - scalability: "Scalability: vertical and horizontal"
+              - availability-reliability: Availability and reliability
+              - latency-throughput: Latency and throughput
+              - load-balancing: Load balancing
+              - caching-at-scale: Caching at scale
+              - sql-vs-nosql: SQL vs NoSQL
+              - replication-sharding: Replication and sharding
+              - cap-theorem: CAP theorem
+              - consistency-models: Consistency models
+              - fault-tolerance: Fault tolerance
+          - slug: hld-problems
+            title: HLD Practice Problems
+            concepts:
+              - hld-url-shortener: URL Shortener
+              - hld-whatsapp: Chat application (WhatsApp)
+              - hld-instagram: Photo sharing (Instagram)
+              - hld-youtube: Video streaming (YouTube)
+              - hld-notification-system: Notification System
+              - hld-ecommerce: E-commerce backend
+              - hld-ride-booking: Ride booking system
+              - hld-rate-limiter: Distributed rate limiter

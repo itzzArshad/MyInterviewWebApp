@@ -1,0 +1,19 @@
+# Production: PostgreSQL (e.g. Neon). All secrets MUST come from environment variables:
+#   DATABASE_URL (jdbc:postgresql://host/db?sslmode=require), DATABASE_USERNAME, DATABASE_PASSWORD,
+#   ACADEMY_JWT_SECRET (>= 32 random chars), ACADEMY_OWNER_USERNAME, ACADEMY_OWNER_PASSWORD
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: 5       # free-tier Postgres has low connection limits
+      minimum-idle: 0            # let the pool drain so Neon can auto-suspend
+      idle-timeout: 120000
+
+server:
+  forward-headers-strategy: framework   # correct client IP / scheme behind the host's proxy
+
+logging:
+  level:
+    root: INFO

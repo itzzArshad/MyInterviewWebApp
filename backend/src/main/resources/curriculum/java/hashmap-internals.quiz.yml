@@ -1,0 +1,151 @@
+questions:
+  - key: q1
+    type: MCQ
+    difficulty: BEGINNER
+    prompt: What are the default initial capacity and load factor of `new HashMap<>()`?
+    options:
+      - 10 and 0.5
+      - 16 and 0.75
+      - 16 and 1.0
+      - 32 and 0.75
+    answer: 1
+    explanation: |
+      **16 buckets, load factor 0.75** — so the first resize happens when the 13th entry is added (threshold 16 × 0.75 = 12). The table itself is allocated lazily on the first `put`.
+
+  - key: q2
+    type: TRUE_FALSE
+    difficulty: BEGINNER
+    prompt: "True or false: `HashMap` allows one `null` key and multiple `null` values."
+    answer: true
+    explanation: |
+      **True.** The `null` key gets hash 0 and lives in bucket 0. (`Hashtable` and `ConcurrentHashMap` reject `null` keys and values.)
+
+  - key: q3
+    type: MCQ
+    difficulty: INTERMEDIATE
+    prompt: How does HashMap compute the bucket index for a key (Java 8+)?
+    options:
+      - "`key.hashCode() % capacity`"
+      - "`(capacity - 1) & (h ^ (h >>> 16))` where `h = key.hashCode()`"
+      - "`System.identityHashCode(key) % capacity`"
+      - A binary search over sorted keys
+    answer: 1
+    hints:
+      - Capacity is always a power of two — which bitwise trick does that enable?
+    explanation: |
+      The hash is "spread" by XOR-ing its high 16 bits into the low 16, then masked with `capacity - 1` (equivalent to modulo for powers of two, but a single AND instruction).
+
+  - key: q4
+    type: MCQ
+    difficulty: INTERMEDIATE
+    prompt: A bucket reaches 8 entries but the table capacity is only 16. What does HashMap do?
+    options:
+      - Converts the bucket to a red-black tree
+      - Throws an exception
+      - Resizes the table instead of treeifying
+      - Nothing until the bucket reaches 64 entries
+    answer: 2
+    hints:
+      - There are two thresholds involved in treeification.
+    explanation: |
+      Treeification requires the bin to hit `TREEIFY_THRESHOLD` (8) **and** the table to have at least `MIN_TREEIFY_CAPACITY` (64) buckets. Below 64, `treeifyBin` **resizes** instead — in a small table, collisions are more likely due to too few buckets than to bad hashes.
+
+  - key: q5
+    type: PREDICT_OUTPUT
+    difficulty: INTERMEDIATE
+    prompt: During a resize from capacity 16 to 32, where do keys with spread hashes **5** and **21** end up? Type the two new indexes separated by a space (hash 5 first).
+    answer: 5 21
+    hints:
+      - Each entry either stays at `i` or moves to `i + oldCap`.
+      - Check the bit `hash & 16`.
+    explanation: |
+      Both were at index 5 (`hash & 15`). On resize HashMap checks `hash & oldCap` (16):
+      - `5 & 16 == 0` → stays at **5**.
+      - `21 & 16 == 16` → moves to 5 + 16 = **21**.
+
+      No hash recomputation is needed — one bit decides.
+
+  - key: q6
+    type: FIND_BUG
+    difficulty: INTERMEDIATE
+    prompt: This counter is shared by all request threads in a Spring singleton service. What is the bug?
+    code: |
+      @Service
+      public class HitCounter {
+          private final Map<String, Integer> hits = new HashMap<>();
+
+          public void record(String path) {
+              Integer current = hits.get(path);
+              hits.put(path, current == null ? 1 : current + 1);
+          }
+      }
+    options:
+      - "`Integer` should be `int`"
+      - HashMap is not thread-safe and get-then-put is not atomic; concurrent requests lose updates or corrupt the map
+      - Spring services cannot have fields
+      - The map should be static
+    answer: 1
+    hints:
+      - How many threads call a singleton bean at the same time?
+    explanation: |
+      Spring beans are singletons shared by all request threads. Two threads can read the same `current` and both write `current + 1` (lost update), and concurrent structural changes/resizes can corrupt the HashMap. Fix: `ConcurrentHashMap` + atomic `hits.merge(path, 1, Integer::sum)` (or `LongAdder` values for very hot counters).
+
+  - key: q7
+    type: MCQ
+    difficulty: ADVANCED
+    prompt: You need to put exactly 1,000 entries into a HashMap with **no** resize. Which is correct?
+    options:
+      - "`new HashMap<>(1000)`"
+      - "`new HashMap<>(750)`"
+      - "`HashMap.newHashMap(1000)` (Java 19+) or `new HashMap<>((int) (1000 / 0.75f) + 1)`"
+      - "`new HashMap<>(1000, 1.0f)` is the only way"
+    answer: 2
+    hints:
+      - "`new HashMap<>(1000)` gives capacity 1024. What is its threshold?"
+    explanation: |
+      The constructor argument is a **capacity**, not an entry count. `new HashMap<>(1000)` → capacity 1024 → threshold 768, so it resizes at entry 769. `HashMap.newHashMap(1000)` computes the capacity from the expected number of mappings (→ 2048). Option D also avoids resizing but changes the load factor, increasing collisions.
+
+  - key: q8
+    type: TRUE_FALSE
+    difficulty: ADVANCED
+    prompt: "True or false: Java 8's switch to tail insertion makes HashMap safe to use from multiple threads without synchronisation."
+    answer: false
+    explanation: |
+      **False.** Tail insertion removed the Java 7 failure mode where a concurrent resize could create a **cycle** (infinite loop on `get`). But concurrent use still loses updates and can corrupt size/structure. Use `ConcurrentHashMap`.
+
+  - key: q9
+    type: SCENARIO
+    difficulty: ADVANCED
+    prompt: An attacker sends a JSON body with 100,000 field names that all have the same `hashCode()`. How does Java 8+ HashMap limit the damage compared to Java 7?
+    options:
+      - It rejects keys with duplicate hash codes
+      - Long collision chains become red-black trees, so lookups in that bucket are O(log n) instead of O(n)
+      - It switches to a TreeMap automatically for the whole map
+      - It randomises hashCode() per JVM
+    answer: 1
+    hints:
+      - What happens to a bucket that grows beyond 8 entries in a large table?
+    explanation: |
+      This is a **hash-flooding** attack. In Java 7, every lookup in that bucket was a linear scan (O(n)), making request processing O(n²). Java 8 treeifies long bins, bounding per-operation cost at O(log n) (keys are ordered by hash, then `compareTo` for comparable keys like String, then a tie-breaker).
+
+  - key: q10
+    type: EXPLAIN
+    difficulty: ADVANCED
+    prompt: Explain, step by step, what happens inside `map.put("java", 1)` on a brand-new `HashMap`.
+    explanation: |
+      **Model answer:**
+      1. The table is null, so `resize()` allocates 16 buckets (threshold 12).
+      2. `hash = h ^ (h >>> 16)` where `h = "java".hashCode()` (cached in the String).
+      3. Index = `(16 - 1) & hash`.
+      4. The bucket is empty, so a new `Node(hash, "java", 1, null)` is stored there.
+      5. `modCount` is incremented (for fail-fast iterators) and `size` becomes 1; since 1 ≤ 12, no resize.
+      6. `put` returns `null` (no previous value).
+
+      Had the bucket been occupied, HashMap would walk it comparing hash then `equals`, replace the value on a match, or append at the tail (treeifying at 8 nodes if capacity ≥ 64).
+
+  - key: q11
+    type: INTERVIEW
+    difficulty: ADVANCED
+    prompt: "Interview: *“How does HashMap work internally, and what happens on a collision?”* Give your best 60-second answer."
+    explanation: |
+      **Strong answer:** "HashMap is an array of buckets, capacity a power of two, default 16 with load factor 0.75. On `put`, it takes the key's `hashCode`, spreads it with `h ^ (h >>> 16)`, and finds the bucket with `(n-1) & hash`. If the bucket is empty it stores a node; otherwise it walks the bucket comparing the cached hash and then `equals` — a match replaces the value, otherwise the node is appended at the tail. That's a collision: entries share a bucket as a linked list, and since Java 8 a list of 8 or more becomes a red-black tree if the table has at least 64 buckets, so worst case is O(log n) instead of O(n). When size exceeds capacity × 0.75 the table doubles and each bucket splits between index `i` and `i + oldCap` based on one hash bit. It's not thread-safe — for concurrency I'd use ConcurrentHashMap — and keys must have a correct, stable `equals`/`hashCode`, ideally immutable."

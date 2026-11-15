@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: academy-backend
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # schema is owned by Flyway, Hibernate only validates it
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  mvc:
+    problemdetails:
+      enabled: true
+
+server:
+  port: ${PORT:8080}
+  error:
+    include-stacktrace: never
+    include-message: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+academy:
+  jwt:
+    secret: ${ACADEMY_JWT_SECRET}
+    ttl: 7d
+  owner:
+    username: ${ACADEMY_OWNER_USERNAME}
+    password: ${ACADEMY_OWNER_PASSWORD}
+    display-name: ${ACADEMY_OWNER_DISPLAY_NAME:}
+  cookie:
+    name: ACADEMY_TOKEN
+    secure: true
+  login-limit:
+    max-failures: 5
+    window: 15m
