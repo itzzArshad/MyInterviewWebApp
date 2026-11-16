@@ -68,6 +68,17 @@ class GitHubContentClientTest {
     }
 
     @Test
+    void forbiddenOnReadExplainsMissingPermission() {
+        server.expect(requestTo(BASE + "?ref=main")).andRespond(withStatus(HttpStatus.FORBIDDEN)
+                .body("{\"message\":\"Resource not accessible by personal access token\"}").contentType(MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.put("java/strings/demo.md", "x", "m", null))
+                .hasMessageContaining("403 reading java/strings/demo.md")
+                .hasMessageContaining("Resource not accessible")
+                .hasMessageContaining("Contents: Read and write");
+    }
+
+    @Test
     void rejectsUnsafePaths() {
         assertThatThrownBy(() -> client.put("../secrets.md", "x", "m", "sha")).isInstanceOf(IllegalArgumentException.class);
     }

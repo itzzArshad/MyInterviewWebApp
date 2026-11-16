@@ -111,7 +111,10 @@ public class GitHubContentClient {
         return wrap(() -> http.get().uri(contentsUri(path) + "?ref=" + props.branch()).exchange((req, res) -> {
             HttpStatusCode status = res.getStatusCode();
             if (status.value() == 404) return null;
-            if (status.isError()) throw new GitHubException("GitHub " + status.value() + " reading " + path);
+            if (status.isError()) {
+                String body = new String(res.getBody().readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                throw describe(status.value(), body, "reading " + path);
+            }
             Map<?, ?> m = res.bodyTo(Map.class);
             return m == null || m.get("sha") == null ? null : String.valueOf(m.get("sha"));
         }));
@@ -135,14 +138,18 @@ public class GitHubContentClient {
     }
 
     private static GitHubException translate(RestClientResponseException e) {
-        String body = e.getResponseBodyAsString();
-        String msg = body.contains("\"message\"") ? body.replaceAll("(?s).*\"message\"\\s*:\\s*\"([^\"]*)\".*", "$1") : e.getStatusText();
-        String hint = switch (e.getStatusCode().value()) {
+        return describe(e.getStatusCode().value(), e.getResponseBodyAsString(), null);
+    }
+
+    private static GitHubException describe(int status, String body, String action) {
+        String msg = body != null && body.contains("\"message\"")
+                ? body.replaceAll("(?s).*\"message\"\\s*:\\s*\"([^\"]*)\".*", "$1") : "request failed";
+        String hint = switch (status) {
             case 401 -> " — the token is invalid or expired.";
-            case 403 -> " — the token lacks 'Contents: read and write' on this repo.";
-            case 404 -> " — repo or branch not found (does the token have access to it?).";
+            case 403 -> " — the token lacks 'Contents: Read and write' on this repo (edit the fine-grained token's permissions).";
+            case 404 -> " — repo or branch not found (check GITHUB_CONTENT_REPO, and that the token can access the repo).";
             default -> "";
         };
-        return new GitHubException("GitHub " + e.getStatusCode().value() + ": " + msg + hint);
+        return new GitHubException("GitHub " + status + (action == null ? "" : " " + action) + ": " + msg + hint);
     }
 }
