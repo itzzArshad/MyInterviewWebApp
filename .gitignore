@@ -21,3 +21,5 @@ frontend/next-env.d.ts
 *.iml
 .DS_Store
 Thumbs.db
+.neon
+node_modules/

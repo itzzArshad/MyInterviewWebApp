@@ -1,14 +1,20 @@
-# Production: PostgreSQL (e.g. Neon). All secrets MUST come from environment variables:
-#   DATABASE_URL (jdbc:postgresql://host/db?sslmode=require), DATABASE_USERNAME, DATABASE_PASSWORD,
+# Production. Secrets come only from environment variables (Render dashboard):
+#
+#   DATABASE_URL           Neon pooled connection string, pasted exactly as Neon shows it
+#                          (postgresql://USER:PASSWORD@HOST-pooler/DB?sslmode=require&channel_binding=require)
+#   DATABASE_URL_UNPOOLED  Neon direct connection string (used for Flyway migrations; derived if omitted)
 #   ACADEMY_JWT_SECRET (>= 32 random chars), ACADEMY_OWNER_USERNAME, ACADEMY_OWNER_PASSWORD
+#
+# NeonDatabaseUrlPostProcessor converts those URLs for JDBC. A plain jdbc:postgresql:// DATABASE_URL with
+# DATABASE_USERNAME / DATABASE_PASSWORD also works.
 spring:
   datasource:
     url: ${DATABASE_URL}
-    username: ${DATABASE_USERNAME}
-    password: ${DATABASE_PASSWORD}
+    username: ${DATABASE_USERNAME:}
+    password: ${DATABASE_PASSWORD:}
     hikari:
       maximum-pool-size: 5       # free-tier Postgres has low connection limits
-      minimum-idle: 0            # let the pool drain so Neon can auto-suspend
+      minimum-idle: 0            # let the pool drain so Neon can scale to zero
       idle-timeout: 120000
 
 server:

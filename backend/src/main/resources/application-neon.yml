@@ -1,0 +1,7 @@
+# Run against your Neon database locally:   ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev,neon
+# Uses DATABASE_URL / DATABASE_URL_UNPOOLED from the repo-root .env.local written by `neon deploy`
+# (or `neon env pull`). Those values are converted for JDBC by NeonDatabaseUrlPostProcessor.
+# Note: the linked branch is whatever `.neon` points at — `neon checkout <branch>` switches it.
+spring:
+  config:
+    import: optional:file:../.env.local[.properties]
