@@ -28,11 +28,14 @@ public class LearnService {
     private final QuizQuestionRepository questions;
     private final QuizAttemptRepository attempts;
     private final ActivityService activity;
+    private final com.academy.lesson.LessonService lessons;
 
     public LearnService(PathRepository paths, SubjectRepository subjects, ChapterRepository chapters,
                         ConceptRepository concepts, ConceptProgressRepository progress,
-                        QuizQuestionRepository questions, QuizAttemptRepository attempts, ActivityService activity) {
+                        QuizQuestionRepository questions, QuizAttemptRepository attempts, ActivityService activity,
+                        com.academy.lesson.LessonService lessons) {
         this.attempts = attempts;
+        this.lessons = lessons;
         this.paths = paths;
         this.subjects = subjects;
         this.chapters = chapters;
@@ -109,7 +112,8 @@ public class LearnService {
         return new ConceptDetail(c.getSlug(), c.getTitle(), c.getDifficulty(), c.getEstMinutes(), c.getSummary(),
                 c.getBodyMd(), c.getStatus() == Concept.Status.PUBLISHED,
                 new Ref(subject.getSlug(), subject.getTitle()), new Ref(chapter.getSlug(), chapter.getTitle()),
-                pv, prev, next, related, (int) questions.countByConceptIdAndActiveTrue(c.getId()), lastQuiz);
+                pv, prev, next, related, (int) questions.countByConceptIdAndActiveTrue(c.getId()), lastQuiz,
+                lessons.syncView(c));
     }
 
     @Transactional

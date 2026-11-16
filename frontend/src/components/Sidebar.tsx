@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
-import { ChevronRight, ChevronsLeft, LogOut, Search } from "lucide-react";
+import { ChevronRight, ChevronsLeft, LogOut, Search, Settings } from "lucide-react";
 import { CURRENT_PHASE, NAV } from "@/lib/nav";
 import { logout, useMe } from "./UserContext";
 
@@ -108,6 +108,15 @@ export function Sidebar({ onNavigate, onOpenSearch, onCollapse }: Props) {
             {(me?.displayName ?? "?").slice(0, 1).toUpperCase()}
           </span>
           <span className="flex-1 truncate">{me?.displayName ?? "…"}</span>
+          <Link
+            href="/settings"
+            onClick={onNavigate}
+            aria-label="Settings"
+            title="Settings"
+            className="flex size-8 items-center justify-center rounded-md text-fg-faint hover:bg-bg-hover hover:text-fg"
+          >
+            <Settings className="size-4" />
+          </Link>
           <button
             onClick={logout}
             aria-label="Log out"

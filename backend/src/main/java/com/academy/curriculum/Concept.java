@@ -55,6 +55,29 @@ public class Concept {
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
+    /** The lesson exactly as authored (front matter + body + quiz block) — what the editor shows and GitHub stores. */
+    @Column(name = "source_md", length = 1_000_000)
+    private String sourceMd;
+
+    /** SEED = bundled with the app (may be refreshed on startup); USER = written in the app (never overwritten). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "content_source", nullable = false, length = 10)
+    private ContentSource contentSource = ContentSource.SEED;
+
+    @Column(name = "github_path", length = 500)
+    private String githubPath;
+
+    @Column(name = "github_sha", length = 64)
+    private String githubSha;
+
+    @Column(name = "github_synced_at")
+    private OffsetDateTime githubSyncedAt;
+
+    @Column(name = "github_error", length = 2000)
+    private String githubError;
+
+    public enum ContentSource { SEED, USER }
+
     protected Concept() {
     }
 
@@ -93,4 +116,32 @@ public class Concept {
     public void setContentHash(String contentHash) { this.contentHash = contentHash; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getSourceMd() { return sourceMd; }
+    public ContentSource getContentSource() { return contentSource; }
+    public String getGithubPath() { return githubPath; }
+    public String getGithubSha() { return githubSha; }
+    public OffsetDateTime getGithubSyncedAt() { return githubSyncedAt; }
+    public String getGithubError() { return githubError; }
+
+    public void setSourceMd(String sourceMd) { this.sourceMd = sourceMd; }
+    public void setContentSource(ContentSource contentSource) { this.contentSource = contentSource; }
+
+    public void markSynced(String path, String sha) {
+        this.githubPath = path;
+        this.githubSha = sha;
+        this.githubSyncedAt = OffsetDateTime.now();
+        this.githubError = null;
+    }
+
+    public void markSyncFailed(String error) {
+        this.githubError = error == null ? "Unknown error" : error.substring(0, Math.min(error.length(), 1900));
+    }
+
+    public void clearGithub() {
+        this.githubPath = null;
+        this.githubSha = null;
+        this.githubSyncedAt = null;
+        this.githubError = null;
+    }
 }

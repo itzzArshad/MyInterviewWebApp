@@ -28,5 +28,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // Skip API proxy, Next internals and static files.
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|ico|webmanifest)$).*)"],
+  // Install assets (manifest, icons) must load without a session.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|manifest.webmanifest|.*\\.(?:png|svg|ico|webmanifest)$).*)"],
 };

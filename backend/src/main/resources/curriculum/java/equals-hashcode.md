@@ -243,3 +243,151 @@ Avoid letting `hashCode` change across the entity's lifecycle: use a natural bus
 - Hash keys should be immutable; mutating a key strands its entry.
 - Use `Objects.equals`/`Objects.hash`, `Double.compare`, `Arrays.equals`; prefer **records** for value types.
 - JPA entities: beware null ids, proxies and lazy fields.
+
+
+## 14. Quiz
+
+~~~quiz
+questions:
+  - key: q1
+    type: TRUE_FALSE
+    difficulty: BEGINNER
+    prompt: "True or false: if two objects have the same `hashCode()`, they must be equal according to `equals()`."
+    answer: false
+    hints:
+      - How many distinct `int` values exist, compared with how many distinct strings?
+    explanation: |
+      **False.** Equal objects must share a hash code, but not the other way around. Collisions are legal and unavoidable — e.g. `"Aa".hashCode() == "BB".hashCode()` (both 2112).
+
+  - key: q2
+    type: MCQ
+    difficulty: BEGINNER
+    prompt: What does `Object.equals()` do if a class does **not** override it?
+    options:
+      - Compares all fields by reflection
+      - Compares the objects' `toString()` output
+      - Returns true only if both references point to the same object
+      - Compares hash codes
+    answer: 2
+    explanation: |
+      The default implementation is `return this == obj;` — **identity** comparison.
+
+  - key: q3
+    type: PREDICT_OUTPUT
+    difficulty: INTERMEDIATE
+    prompt: "`Point` overrides `equals` (comparing x and y) but **not** `hashCode`. What is the most likely output?"
+    code: |
+      Set<Point> set = new HashSet<>();
+      set.add(new Point(1, 2));
+      set.add(new Point(1, 2));
+      System.out.println(set.size() + " " + set.contains(new Point(1, 2)));
+    options:
+      - 1 true
+      - 2 true
+      - 2 false
+      - 1 false
+    answer: 2
+    hints:
+      - Which method does HashSet call first to choose a bucket?
+    explanation: |
+      Without `hashCode`, each `Point` gets an identity hash, so the two "equal" points land in different buckets → both are kept (size 2), and the lookup object hashes to yet another bucket → `contains` is false. (Rarely, identity hashes could collide by chance — that's why this is "most likely".)
+
+  - key: q4
+    type: PREDICT_OUTPUT
+    difficulty: INTERMEDIATE
+    prompt: "`Tag` correctly implements `equals`/`hashCode` based on its mutable `name` field. What is printed?"
+    code: |
+      Set<Tag> tags = new HashSet<>();
+      Tag t = new Tag("java");
+      tags.add(t);
+      t.name = "spring";
+      System.out.println(tags.contains(t) + " " + tags.size());
+    options:
+      - true 1
+      - false 1
+      - false 0
+      - true 2
+    answer: 1
+    hints:
+      - Which bucket was `t` stored in, and which bucket does `contains(t)` search now?
+    explanation: |
+      `t` was stored in the bucket for `"java"`'s hash. After mutation, `contains(t)` hashes `"spring"` and searches a different bucket → **false**. The entry is still in the set (size **1**) but unreachable — a classic memory-leak bug. Keys must be immutable.
+
+  - key: q5
+    type: FIND_BUG
+    difficulty: INTERMEDIATE
+    prompt: Why does `list.contains(new Money(100, "EUR"))` return false even though an equal Money is in the list?
+    code: |
+      public class Money {
+          private final long cents;
+          private final String currency;
+          // constructor omitted
+
+          public boolean equals(Money other) {
+              return other != null && cents == other.cents && currency.equals(other.currency);
+          }
+
+          @Override
+          public int hashCode() { return Objects.hash(cents, currency); }
+      }
+    options:
+      - "`Objects.hash` is wrong for longs"
+      - "`equals(Money)` overloads instead of overriding `equals(Object)`, so collections still use identity equality"
+      - Lists don't use equals
+      - currency must be compared with ==
+    answer: 1
+    hints:
+      - What is the parameter type of `Object.equals`?
+    explanation: |
+      Collections call `equals(Object)`. A method `equals(Money)` is a separate **overload** that they never invoke, so identity equality is used. Adding `@Override` would have produced a compile error and revealed the bug. Fix: `public boolean equals(Object o)` with a type check.
+
+  - key: q6
+    type: MCQ
+    difficulty: ADVANCED
+    prompt: What does this print?
+    code: |
+      Set<BigDecimal> hash = new HashSet<>(List.of(new BigDecimal("1.0"), new BigDecimal("1.00")));
+      Set<BigDecimal> tree = new TreeSet<>(List.of(new BigDecimal("1.0"), new BigDecimal("1.00")));
+      System.out.println(hash.size() + " " + tree.size());
+    options:
+      - 1 1
+      - 2 2
+      - 2 1
+      - 1 2
+    answer: 2
+    hints:
+      - "`HashSet` uses equals/hashCode; `TreeSet` uses compareTo."
+      - Does `BigDecimal.equals` consider scale?
+    explanation: |
+      `BigDecimal.equals` considers **scale** (1.0 ≠ 1.00), so `HashSet` keeps both → 2. `compareTo` treats them as numerically equal (returns 0), so `TreeSet` keeps one → 1. This is the textbook example of `equals` being *inconsistent with* `compareTo`.
+
+  - key: q7
+    type: SCENARIO
+    difficulty: ADVANCED
+    prompt: |
+      A JPA entity uses a database-generated `@Id Long id` and implements `hashCode()` as `Objects.hash(id)`. You add a new (unsaved) entity to a `HashSet`, then call `repository.save(entity)`. What can go wrong?
+    options:
+      - Nothing — ids never change
+      - The id changes from null to a value, so the hash code changes and the set can no longer find the entity
+      - Hibernate throws an exception because sets are not allowed
+      - Saving clears the set
+    answer: 1
+    hints:
+      - What is the id before the INSERT happens?
+    explanation: |
+      Before persisting, `id` is `null`; after `save`, it's assigned. `hashCode` changes while the object sits in the `HashSet`, stranding it in the wrong bucket. Common fixes: use an immutable natural/business key, or make `equals` id-based (false when id is null) with a **constant** `hashCode`.
+
+  - key: q8
+    type: EXPLAIN
+    difficulty: INTERMEDIATE
+    prompt: In your own words, explain **why equal objects must have equal hash codes**, using how a HashMap lookup works.
+    explanation: |
+      **Model answer:** A HashMap first uses `hashCode()` to choose a bucket, and only then uses `equals()` to compare against entries in that bucket. If two equal objects had different hash codes, a lookup with one would search a different bucket from where the other was stored and never even call `equals` — so the map would report the key as missing and sets would accept duplicates. Equal hash codes for equal objects guarantee they meet in the same bucket where `equals` can recognise them.
+
+  - key: q9
+    type: INTERVIEW
+    difficulty: INTERMEDIATE
+    prompt: "Interview: *“Walk me through how you'd write equals() and hashCode() for a class.”*"
+    explanation: |
+      **Strong answer:** "First decide which fields define logical identity — ideally immutable ones. In `equals(Object o)` with `@Override`: return true if `this == o`; false if `o` is null or a different class (I use `getClass()` unless I need proxy/subclass compatibility, in which case `instanceof` with a final equals); cast; compare primitives with `==` (doubles with `Double.compare`), objects with `Objects.equals`, arrays with `Arrays.equals`. In `hashCode`, combine exactly the same fields — `Objects.hash(...)` or `31 * h + field`. Then test reflexivity, symmetry, and that equal objects have equal hashes. If it's a pure value type, I'd just use a **record**. For JPA entities I'd avoid hash codes that change when the id is generated."
+~~~

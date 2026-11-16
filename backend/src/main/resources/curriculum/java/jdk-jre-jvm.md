@@ -216,3 +216,128 @@ The class was compiled for a newer Java version than the JVM running it. Fix it 
 - Tiered JIT: interpreter → C1 → C2; hot code becomes optimised native code; deoptimisation if assumptions break.
 - No separate JRE since Java 11 — use a JDK or a `jlink` custom runtime.
 - Production: LTS versions, container-aware heap sizing, JDK tools (`jcmd`, JFR) for diagnosis.
+
+
+## 14. Quiz
+
+~~~quiz
+questions:
+  - key: q1
+    type: MCQ
+    difficulty: BEGINNER
+    prompt: Which component is **required on a build server** that compiles Java source code?
+    options:
+      - JVM only
+      - JRE only
+      - JDK
+      - Any of them — they are the same thing
+    answer: 2
+    hints:
+      - Which layer contains `javac`?
+    explanation: |
+      Compiling needs `javac`, which only ships in the **JDK**. The JRE (JVM + class library) can run bytecode but cannot compile source.
+
+  - key: q2
+    type: TRUE_FALSE
+    difficulty: BEGINNER
+    prompt: "True or false: the JVM itself is platform independent."
+    answer: false
+    hints:
+      - Think about what the JVM must ultimately produce for the CPU.
+    explanation: |
+      **False.** *Bytecode* is platform independent. The JVM is a native program that translates bytecode into a specific CPU's machine code and calls a specific OS — so there is a separate JVM build per platform.
+
+  - key: q3
+    type: MCQ
+    difficulty: BEGINNER
+    prompt: What does `javac` produce?
+    options:
+      - Native machine code for the current CPU
+      - Bytecode in `.class` files
+      - An executable `.exe`
+      - Java source code with comments removed
+    answer: 1
+    explanation: |
+      `javac` compiles `.java` source into **bytecode** stored in `.class` files. Turning bytecode into machine code is done later, at run time, by the JVM's interpreter and JIT compiler.
+
+  - key: q4
+    type: SCENARIO
+    difficulty: INTERMEDIATE
+    prompt: |
+      A service compiled on a developer laptop fails in production at startup with:
+
+      `java.lang.UnsupportedClassVersionError: ... class file version 65.0, this version of the Java Runtime only recognizes class file versions up to 61.0`
+
+      What is the most likely cause?
+    options:
+      - The JAR is corrupted
+      - The classes were compiled for a newer Java version (21) than the production JVM (17)
+      - The classpath is missing a dependency
+      - The heap is too small
+    answer: 1
+    hints:
+      - Class file version 61 = Java 17; each Java release adds 1.
+    explanation: |
+      Class file 65.0 is **Java 21**; 61.0 is **Java 17**. The code was compiled for a newer release than the runtime supports. Either upgrade the production JVM or compile with `--release 17` (in Maven: `<maven.compiler.release>17</maven.compiler.release>`).
+
+  - key: q5
+    type: MCQ
+    difficulty: INTERMEDIATE
+    prompt: Why does a Java service often get **faster** during its first minutes after startup?
+    options:
+      - The garbage collector deletes unused classes
+      - The OS caches the JAR file
+      - The JIT compiler progressively compiles hot code paths into optimised machine code
+      - Java recompiles the source code in the background
+    answer: 2
+    hints:
+      - The JVM starts by interpreting bytecode. What changes over time?
+    explanation: |
+      Code starts **interpreted**. As methods become hot, tiered compilation compiles them with C1 and then the hottest with C2 using runtime profiling data. This *warm-up* is why load tests should exclude the first minutes and why micro-benchmarks need JMH.
+
+  - key: q6
+    type: TRUE_FALSE
+    difficulty: INTERMEDIATE
+    prompt: "True or false: since Java 11, most vendors no longer distribute a standalone JRE; `jlink` can create a custom runtime instead."
+    answer: true
+    explanation: |
+      **True.** From Java 11, Oracle (and most OpenJDK vendors) stopped shipping a separate JRE installer. `jlink` assembles a runtime containing only the modules you need — commonly used for small container images.
+
+  - key: q7
+    type: FIND_BUG
+    difficulty: ADVANCED
+    prompt: |
+      A teammate benchmarks two implementations like this and concludes that `fastVersion()` is 10× slower than `slowVersion()`. What is wrong with the measurement?
+    code: |
+      long t0 = System.nanoTime();
+      fastVersion();          // measured first, run once
+      long t1 = System.nanoTime();
+      slowVersion();          // measured second, run once
+      long t2 = System.nanoTime();
+      System.out.println("fast=" + (t1 - t0) + " slow=" + (t2 - t1));
+    options:
+      - "`System.nanoTime()` is not precise enough"
+      - It measures cold, interpreted code and class-loading / JIT effects rather than steady-state performance; order also biases the result
+      - The methods should be static
+      - Nothing — this is a valid benchmark
+    answer: 1
+    hints:
+      - What state is the JVM in the very first time a method runs?
+      - Does running something first affect what runs second?
+    explanation: |
+      A single cold run includes class loading, interpretation and JIT compilation. The first method also pays for shared warm-up that the second benefits from. The JIT may even eliminate code whose result is unused. Use **JMH**, which handles warm-up iterations, forking and dead-code elimination.
+
+  - key: q8
+    type: EXPLAIN
+    difficulty: INTERMEDIATE
+    prompt: In your own words, explain **how "write once, run anywhere" actually works** — from `.java` file to CPU instructions.
+    explanation: |
+      **Model answer:** Source is compiled once by `javac` into platform-neutral **bytecode** for an abstract stack machine. Each platform has its own native **JVM** implementation. At run time the JVM loads the classes (class loaders), verifies the bytecode for safety, initialises them, and executes them — first by interpreting, then by JIT-compiling hot code into that platform's machine code. Portability comes from the bytecode contract; the per-platform work is done once by JVM authors rather than by every application developer.
+
+  - key: q9
+    type: INTERVIEW
+    difficulty: ADVANCED
+    prompt: "Interview: *“Is Java compiled or interpreted? Defend your answer.”* Answer as you would in an interview."
+    explanation: |
+      **Strong answer:** "Both, in two stages. `javac` compiles source to bytecode ahead of time — that catches type errors and produces portable class files. At run time HotSpot starts by interpreting bytecode, profiles it, and JIT-compiles hot methods with tiered compilation: C1 quickly, then C2 with aggressive optimisations like inlining and escape analysis, using real runtime type and branch information. If an assumption becomes invalid it deoptimises. So steady-state Java runs as optimised native code; the trade-off is warm-up time, which is why we have options like CDS or GraalVM native images when startup matters."
+~~~

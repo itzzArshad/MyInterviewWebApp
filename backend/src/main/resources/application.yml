@@ -43,3 +43,8 @@ academy:
   login-limit:
     max-failures: 5
     window: 15m
+  # Optional mirror of every lesson into a GitHub repo (disabled when token/repo are blank)
+  github:
+    token: ${GITHUB_CONTENT_TOKEN:}
+    repo: ${GITHUB_CONTENT_REPO:}
+    branch: ${GITHUB_CONTENT_BRANCH:main}

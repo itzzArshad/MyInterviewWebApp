@@ -1,8 +1,17 @@
+# Integration tests run against a real PostgreSQL database (academy_test), wiped before each
+# Spring context starts (see CleanDatabaseConfig). Credentials come from backend/.env.local
+# locally, or from environment variables in CI.
 spring:
+  config:
+    import: optional:file:.env.local[.properties]
   datasource:
-    url: jdbc:h2:mem:academy-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
-    username: sa
-    password: ""
+    url: ${TEST_DATABASE_URL:jdbc:postgresql://localhost:5432/academy_test}
+    username: ${ACADEMY_DB_USERNAME:academy}
+    password: ${ACADEMY_DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: 3
+  flyway:
+    clean-disabled: false   # tests only — never enable this in dev/prod
 
 academy:
   jwt:
@@ -16,3 +25,6 @@ academy:
   login-limit:
     max-failures: 3
     window: 15m
+  github:
+    token: ""   # never touch the real content repo from tests (even if .env.local has a token)
+    repo: ""

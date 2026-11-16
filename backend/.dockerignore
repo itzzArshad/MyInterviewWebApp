@@ -1,0 +1,9 @@
+# Keep local secrets and build output out of the image
+.env
+.env.*
+!.env.example
+target/
+data/
+*.log
+.idea/
+*.iml

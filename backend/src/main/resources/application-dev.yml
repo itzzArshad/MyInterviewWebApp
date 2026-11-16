@@ -1,10 +1,13 @@
-# Local development: file-based H2 in PostgreSQL mode, no Docker needed.
-# Override any value with environment variables (see backend/.env.example).
+# Local development against a local PostgreSQL (same engine as production).
+# Credentials are read from backend/.env.local (git-ignored) — see README "Local PostgreSQL".
+# Any value can be overridden with environment variables.
 spring:
+  config:
+    import: optional:file:.env.local[.properties]
   datasource:
-    url: jdbc:h2:file:./data/academy-dev;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
-    username: sa
-    password: ""
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/academy}
+    username: ${ACADEMY_DB_USERNAME:academy}
+    password: ${ACADEMY_DB_PASSWORD:}
 
 academy:
   jwt:

@@ -5,7 +5,7 @@ export const SHIKI_THEMES = { light: "github-light", dark: "github-dark" } as co
 
 const LANGS = [
   "java", "kotlin", "bash", "shell", "yaml", "json", "sql", "xml", "properties",
-  "typescript", "javascript", "tsx", "html", "css", "dockerfile", "http", "python", "diff",
+  "typescript", "javascript", "tsx", "html", "css", "dockerfile", "http", "python", "diff", "mermaid",
 ];
 
 let highlighter: Promise<Highlighter> | null = null;

@@ -122,6 +122,62 @@ export interface ConceptDetail {
   related: (Ref & { published: boolean })[];
   questionCount: number;
   lastQuiz: { score: number; total: number; finishedAt: string } | null;
+  sync: SyncView;
+}
+
+// ---------------------------------------------------------------- lesson authoring
+export type SyncState = "DISABLED" | "NOT_SYNCED" | "SYNCED" | "FAILED";
+
+export interface SyncView {
+  state: SyncState;
+  path: string | null;
+  url: string | null;
+  syncedAt: string | null;
+  error: string | null;
+}
+
+export interface LessonSource {
+  slug: string;
+  title: string;
+  kind: "CONCEPT" | "LLD_PROBLEM" | "HLD_PROBLEM";
+  published: boolean;
+  contentSource: "SEED" | "USER";
+  markdown: string;
+  sync: SyncView;
+}
+
+export interface LessonPreview {
+  valid: boolean;
+  difficulty: Difficulty | null;
+  minutes: number | null;
+  summary: string | null;
+  sections: number;
+  expectedSections: number;
+  questions: number;
+  questionsByType: Record<string, number>;
+  body: string;
+  errors: string[];
+  warnings: string[];
+}
+
+export interface SaveResult {
+  slug: string;
+  questions: number;
+  warnings: string[];
+  sync: SyncView;
+}
+
+export interface GitHubStatus {
+  enabled: boolean;
+  repo: string | null;
+  branch: string;
+  url: string | null;
+}
+
+export interface BulkResult {
+  succeeded: number;
+  failed: number;
+  messages: string[];
 }
 
 // ---------------------------------------------------------------- quiz

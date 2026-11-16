@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, ArrowRight, Clock, PenLine } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, PenLine, Pencil, Plus } from "lucide-react";
+import { CopyPromptButton } from "@/components/lesson/CopyPromptButton";
+import { SyncBadge } from "@/components/lesson/SyncBadge";
 import { serverApi } from "@/lib/server-api";
 import type { ConceptDetail, QuestionView } from "@/lib/types";
 import { extractToc } from "@/lib/toc";
@@ -54,8 +56,17 @@ export default async function LessonPage({ params }: Params) {
               {c.questionCount > 0 && <span>{c.questionCount} quiz questions</span>}
             </div>
             {c.summary && <p className="mt-4 text-lg leading-relaxed text-fg-muted">{c.summary}</p>}
-            <div className="mt-5">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <LessonActions slug={c.slug} initial={c.progress} />
+              <div className="flex items-center gap-3">
+                <SyncBadge slug={c.slug} sync={c.sync} />
+                <Link
+                  href={`/learn/${c.slug}/edit`}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-fg-muted hover:bg-bg-hover hover:text-fg"
+                >
+                  <Pencil className="size-4" /> Edit
+                </Link>
+              </div>
             </div>
 
             <div className="mt-6">
@@ -87,12 +98,22 @@ export default async function LessonPage({ params }: Params) {
             )}
           </>
         ) : (
-          <div className="mt-8 rounded-xl border border-dashed border-border p-8 text-center">
-            <PenLine className="mx-auto size-8 text-fg-faint" strokeWidth={1.5} />
+          <div className="mt-8 rounded-xl border border-dashed border-border p-6 md:p-8">
+            <PenLine className="size-8 text-fg-faint" strokeWidth={1.5} />
             <p className="mt-3 font-medium">This lesson hasn&apos;t been written yet</p>
             <p className="mt-1 text-sm text-fg-muted">
-              It&apos;s part of <em>{c.chapter.title}</em> and will follow the same 14-section format.
+              Copy the prompt, send it to ChatGPT or Claude, then paste the full answer — the lesson and its quiz are created
+              from it.
             </p>
+            <div className="mt-5 flex flex-wrap items-start gap-3">
+              <Link
+                href={`/learn/${c.slug}/edit`}
+                className="inline-flex items-center gap-1.5 rounded-md bg-accent px-4 py-1.5 text-sm font-medium text-white hover:opacity-90"
+              >
+                <Plus className="size-4" /> Add lesson
+              </Link>
+              <CopyPromptButton slug={c.slug} />
+            </div>
           </div>
         )}
 

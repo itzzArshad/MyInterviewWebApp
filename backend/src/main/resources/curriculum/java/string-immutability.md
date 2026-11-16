@@ -228,3 +228,175 @@ A `char[]` can be overwritten (`Arrays.fill(pw, '\0')`) as soon as it's used. A 
 - Always compare with `equals()`, never `==`.
 - Loops → `StringBuilder`; joining → `String.join` / `Collectors.joining`.
 - Java 9 compact strings: `byte[]` + coder, 1 byte per Latin-1 char.
+
+
+## 14. Quiz
+
+~~~quiz
+questions:
+  - key: q1
+    type: PREDICT_OUTPUT
+    difficulty: BEGINNER
+    prompt: What does this print?
+    code: |
+      String s = "java";
+      s.toUpperCase();
+      s.concat(" rocks");
+      System.out.println(s);
+    options:
+      - java
+      - JAVA
+      - java rocks
+      - JAVA rocks
+    answer: 0
+    hints:
+      - Were the return values of `toUpperCase()` and `concat()` used?
+    explanation: |
+      Strings are immutable. `toUpperCase()` and `concat()` return **new** strings that are discarded here; `s` still refers to `"java"`.
+
+  - key: q2
+    type: PREDICT_OUTPUT
+    difficulty: INTERMEDIATE
+    prompt: Type the **exact output** (one value per line).
+    code: |
+      String a = "hello";
+      String b = "hel" + "lo";
+      String c = new String("hello");
+      String e = "hel";
+      String f = e + "lo";
+      System.out.println(a == b);
+      System.out.println(a == c);
+      System.out.println(a == c.intern());
+      System.out.println(a == f);
+    answer: |
+      true
+      false
+      true
+      false
+    hints:
+      - Which concatenations can `javac` compute at compile time?
+      - What does `intern()` return?
+    explanation: |
+      - `"hel" + "lo"` is a **compile-time constant** → folded into the pooled literal `"hello"` → `true`.
+      - `new String(...)` always creates a new object → `false`.
+      - `intern()` returns the pooled instance → `true`.
+      - `e` is not `final`, so `e + "lo"` is computed **at run time** → new object → `false`.
+
+      (If `e` were declared `final String e = "hel";`, the last line would print `true`.)
+
+  - key: q3
+    type: TRUE_FALSE
+    difficulty: BEGINNER
+    prompt: "True or false: declaring `final String name = \"Ada\";` is what makes the string immutable."
+    answer: false
+    explanation: |
+      **False.** The `String` object is immutable regardless. `final` only prevents the **variable** `name` from being reassigned to another object.
+
+  - key: q4
+    type: MCQ
+    difficulty: INTERMEDIATE
+    prompt: Since which Java version does the string pool live in the regular heap instead of PermGen?
+    options:
+      - Java 5
+      - Java 7
+      - Java 9
+      - Java 11
+    answer: 1
+    explanation: |
+      **Java 7** moved interned strings to the main heap (PermGen itself was removed in Java 8 and replaced by Metaspace). This allows pooled strings to be garbage-collected normally.
+
+  - key: q5
+    type: FIND_BUG
+    difficulty: INTERMEDIATE
+    prompt: This code works in unit tests but randomly fails in production. Why?
+    code: |
+      @PostMapping("/orders/{status}")
+      public List<Order> byStatus(@PathVariable String status) {
+          if (status == "OPEN") {
+              return repository.findOpen();
+          }
+          return repository.findAll();
+      }
+    options:
+      - "`@PathVariable` cannot bind to a String"
+      - "`==` compares references; the path variable is a new String object, not the pooled literal"
+      - The method should be static
+      - The comparison is case sensitive
+    answer: 1
+    hints:
+      - Where does the `status` object come from — a literal in your code, or something parsed at run time?
+    explanation: |
+      Values parsed from requests are **new String objects**, so `status == "OPEN"` is almost always `false`. Tests that pass literals may accidentally get the same pooled instance. Use `"OPEN".equals(status)` (null-safe), or better, bind to an **enum**.
+
+  - key: q6
+    type: MCQ
+    difficulty: INTERMEDIATE
+    prompt: Why is building a large string with `result += item;` inside a loop slow?
+    options:
+      - "`+=` is synchronised"
+      - Each iteration creates a new String and copies all previous characters, giving O(n²) work
+      - Strings are stored on disk
+      - The JIT cannot compile loops
+    answer: 1
+    explanation: |
+      Because `String` is immutable, each `+=` allocates a new string containing everything so far. For *n* items that copies ~n²/2 characters. A single `StringBuilder` grows its buffer amortised O(n).
+
+  - key: q7
+    type: SCENARIO
+    difficulty: ADVANCED
+    prompt: Which property of `String` most directly makes it a **safe and fast `HashMap` key**?
+    options:
+      - It implements `Comparable`
+      - It is immutable, so its hash code never changes and can be cached
+      - It is stored in the string pool
+      - It uses compact strings
+    answer: 1
+    hints:
+      - What happens to an entry if a key's hashCode changes after insertion?
+    explanation: |
+      `HashMap` locates entries by hash. If a key's state (and thus hash) changed after insertion, the entry would sit in the wrong bucket and become unreachable. Immutability guarantees a stable hash — and lets `String` **cache** it in its `hash` field so repeated lookups don't recompute it.
+
+  - key: q8
+    type: CODE
+    difficulty: INTERMEDIATE
+    prompt: |
+      Make this class properly immutable. Write the corrected version.
+    code: |
+      public class Team {
+          private String name;
+          private List<String> members;
+
+          public Team(String name, List<String> members) {
+              this.name = name;
+              this.members = members;
+          }
+          public List<String> getMembers() { return members; }
+          public void setName(String name) { this.name = name; }
+      }
+    explanation: |
+      **Reference solution:**
+
+      ```java
+      public final class Team {
+          private final String name;
+          private final List<String> members;
+
+          public Team(String name, List<String> members) {
+              this.name = Objects.requireNonNull(name);
+              this.members = List.copyOf(members);   // defensive, unmodifiable copy
+          }
+          public String getName() { return name; }
+          public List<String> getMembers() { return members; } // already unmodifiable
+          public Team withName(String newName) { return new Team(newName, members); }
+      }
+      ```
+
+      Checklist: `final` class, `private final` fields, no setters (a `withX` method returns a new object), **defensive copy** of the mutable list on the way in (otherwise the caller can still mutate it), and never expose a mutable internal reference on the way out.
+
+  - key: q9
+    type: INTERVIEW
+    difficulty: INTERMEDIATE
+    prompt: "Interview: *“Why is String immutable in Java?”* Give a complete answer."
+    explanation: |
+      **Strong answer:** "Mainly four reasons. **Security** — strings carry file paths, class names, URLs and credentials into security-sensitive APIs; if they could change after validation you'd get time-of-check/time-of-use bugs. **Thread safety** — immutable objects can be shared across threads without synchronisation. **The string pool** — because nobody can modify a literal, the JVM can share one instance for identical literals and save memory. **Hash caching** — the hash code can be computed once and cached, which makes strings efficient HashMap keys and guarantees they never end up in the wrong bucket. The cost is that 'modifying' creates new objects, so for heavy building we use StringBuilder."
+~~~

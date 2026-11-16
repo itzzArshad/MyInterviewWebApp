@@ -46,7 +46,7 @@ public final class LearnDtos {
                                 String summary, String bodyMd, boolean published,
                                 Ref subject, Ref chapter, ProgressView progress,
                                 Ref prev, Ref next, List<RelatedRef> related, int questionCount,
-                                LastQuiz lastQuiz) {
+                                LastQuiz lastQuiz, com.academy.lesson.LessonDtos.SyncView sync) {
     }
 
     public record LastQuiz(int score, int total, OffsetDateTime finishedAt) {
