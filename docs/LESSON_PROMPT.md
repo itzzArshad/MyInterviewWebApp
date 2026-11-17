@@ -51,7 +51,7 @@ summary: <one sentence, max 25 words, that makes me want to read the lesson>
 ## 8. Real-world backend development use cases  → where it appears in Spring Boot services, APIs, databases, production
 ## 9. Common mistakes and misconceptions  → bugs and wrong mental models, with fixes
 ## 10. Performance considerations and best practices  → costs, complexity, tuning, rules of thumb
-## 11. Interview questions and answers  → 6–10 questions from basic to senior level, with strong answers
+## 11. Interview questions and answers  → 6–10 questions from basic to senior level, each with key points and follow-ups (format below)
 ## 12. Related concepts and dependencies  → what to learn before and after, and how they connect
 ## 13. Summary and revision notes  → crisp bullet-point cheat sheet for quick revision
    You may use ### sub-headings inside any section.
@@ -60,7 +60,16 @@ summary: <one sentence, max 25 words, that makes me want to read the lesson>
    - Java code must compile on Java 21 (unless it deliberately shows a bug — then say so). Include imports when they are not obvious.
    - Use tables for comparisons, > blockquotes for key insights and one-line interview answers, **bold** for key terms.
    - Diagrams: use ```mermaid blocks (flowchart, sequenceDiagram, classDiagram, erDiagram) or ASCII art inside ```text.
-   - In the interview section write every question as a bold line "**Q1. …**" followed by the answer as normal paragraphs.
+   - Interview section — my app turns it into spoken-answer practice, so use exactly this shape for every question:
+
+     **Q1. The question, as an interviewer would ask it?**
+
+     The strong answer in normal paragraphs, structured as: what it is → why it exists → how it works inside → a concrete example → trade-offs or pitfalls.
+
+     - Key points: first point the answer must cover | second point | third point | fourth point
+     - Follow-up: The deeper question the interviewer asks next? → Its short, precise answer
+
+     Give 4–6 key points (short phrases, separated by " | ") and 1–2 follow-ups per question. Number questions Q1, Q2, … and keep the "**Q1. …**" line on its own.
 5. Finish with the heading "## 14. Quiz" followed by exactly ONE quiz block. Fence it with TILDES (~~~quiz … ~~~), not backticks. Inside, write YAML in exactly this schema:
 
 ~~~quiz
@@ -93,6 +102,7 @@ QUIZ RULES
 - TRUE_FALSE: no options; `answer: true` or `answer: false`.
 - PREDICT_OUTPUT: either options + a letter answer, or no options and `answer: |` containing the exact console output.
 - EXPLAIN, INTERVIEW, CODE: no options and no answer. Put a complete model answer / reference solution in `explanation` — I grade myself against it.
+  Also add `keyPoints:` — a list of 4–6 short quoted phrases the answer must cover (my app shows them as a self-scoring checklist).
 - Every question has 1–2 hints and an explanation.
 - Test understanding, not memorisation: internals, trade-offs, edge cases, debugging, and realistic backend scenarios.
 - YAML safety: use `|` block scalars for prompt, code, multi-line answers and explanation. Wrap every option and hint in double quotes (escape inner double quotes as \"). Indent with 2 spaces, never tabs. Inside the quiz block you may use ``` code fences in explanations, but never start a line with ~~~.

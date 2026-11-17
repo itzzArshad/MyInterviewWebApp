@@ -47,6 +47,10 @@ public class QuizQuestion {
     @Column(name = "hints_json", length = 10000)
     private String hintsJson;
 
+    /** Checklist used to self-score explain/interview answers. */
+    @Column(name = "key_points_json", length = 10000)
+    private String keyPointsJson;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
@@ -89,4 +93,6 @@ public class QuizQuestion {
     public void setHintsJson(String hintsJson) { this.hintsJson = hintsJson; }
     public void setSortOrder(int sortOrder) { this.sortOrder = sortOrder; }
     public void setActive(boolean active) { this.active = active; }
+    public String getKeyPointsJson() { return keyPointsJson; }
+    public void setKeyPointsJson(String keyPointsJson) { this.keyPointsJson = keyPointsJson; }
 }

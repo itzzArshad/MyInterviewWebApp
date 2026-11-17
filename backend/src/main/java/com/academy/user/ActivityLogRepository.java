@@ -7,9 +7,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
     boolean existsByUserIdAndActivityDate(Long userId, LocalDate date);
+
+    Optional<ActivityLog> findByUserIdAndActivityDate(Long userId, LocalDate date);
 
     List<ActivityLog> findByUserIdAndActivityDateGreaterThanEqualOrderByActivityDateDesc(Long userId, LocalDate from);
 

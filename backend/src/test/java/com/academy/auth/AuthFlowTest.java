@@ -61,8 +61,8 @@ class AuthFlowTest {
 
         mvc.perform(get("/api/dashboard").cookie(cookie))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.stats.streakDays").value(1))
-                .andExpect(jsonPath("$.modules[0].key").value("dashboard"));
+                .andExpect(jsonPath("$.stats.streakDays").value(0))
+                .andExpect(jsonPath("$.modules[0].key").value("today"));
     }
 
     @Test

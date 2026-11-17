@@ -10,4 +10,6 @@ public interface ConceptProgressRepository extends JpaRepository<ConceptProgress
     List<ConceptProgress> findByUserId(Long userId);
 
     Optional<ConceptProgress> findByUserIdAndConceptId(Long userId, Long conceptId);
+
+    boolean existsByUserIdAndCompletedAtGreaterThanEqual(Long userId, java.time.OffsetDateTime since);
 }

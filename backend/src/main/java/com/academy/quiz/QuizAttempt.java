@@ -35,7 +35,16 @@ public class QuizAttempt {
     @Column(nullable = false)
     private int total;
 
+    /** LESSON = full quiz, RETRY = only previously wrong questions, DRILL = daily single-question drill */
+    @Column(nullable = false, length = 20)
+    private String mode = "LESSON";
+
     protected QuizAttempt() {
+    }
+
+    public QuizAttempt(Long userId, Long conceptId, List<Long> questionIds, String mode) {
+        this(userId, conceptId, questionIds);
+        this.mode = mode;
     }
 
     public QuizAttempt(Long userId, Long conceptId, List<Long> questionIds) {
@@ -66,4 +75,5 @@ public class QuizAttempt {
     public OffsetDateTime getFinishedAt() { return finishedAt; }
     public Integer getScore() { return score; }
     public int getTotal() { return total; }
+    public String getMode() { return mode; }
 }

@@ -23,7 +23,11 @@ public final class QuizDtos {
                                boolean selfGraded, String modelAnswer) {
     }
 
-    public record StartRequest(@NotBlank String conceptSlug, @Size(max = 100) List<Long> questionIds) {
+    /** mode: omit for a lesson quiz (or retry when questionIds are given); "DRILL" for the daily single-question drill. */
+    public record StartRequest(@NotBlank String conceptSlug, @Size(max = 100) List<Long> questionIds, String mode) {
+        public StartRequest(String conceptSlug, List<Long> questionIds) {
+            this(conceptSlug, questionIds, null);
+        }
     }
 
     public record AttemptView(Long attemptId, String conceptSlug, List<QuestionView> questions) {

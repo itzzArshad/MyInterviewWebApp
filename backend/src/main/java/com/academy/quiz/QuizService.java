@@ -5,9 +5,12 @@ import com.academy.curriculum.LearnService;
 import com.academy.progress.ConceptProgress;
 import com.academy.progress.ConceptProgressRepository;
 import com.academy.quiz.QuizDtos.*;
+import com.academy.common.ProgressEvent;
+import com.academy.revision.ReviewService;
 import com.academy.user.ActivityService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -30,11 +33,15 @@ public class QuizService {
     private final ConceptProgressRepository progressRepo;
     private final LearnService learn;
     private final ActivityService activity;
+    private final ReviewService reviews;
+    private final ApplicationEventPublisher events;
     private final ObjectMapper json;
 
     public QuizService(QuizQuestionRepository questions, QuizAttemptRepository attempts, QuizAnswerRepository answers,
                        ConceptProgressRepository progressRepo, LearnService learn,
-                       ActivityService activity, ObjectMapper json) {
+                       ActivityService activity, ReviewService reviews, ApplicationEventPublisher events, ObjectMapper json) {
+        this.reviews = reviews;
+        this.events = events;
         this.questions = questions;
         this.attempts = attempts;
         this.answers = answers;
@@ -61,8 +68,10 @@ public class QuizService {
         List<QuizQuestion> ordered = pool.stream()
                 .sorted(Comparator.comparing(QuizQuestion::getDifficulty).thenComparingInt(QuizQuestion::getSortOrder))
                 .toList();
+        String mode = "DRILL".equalsIgnoreCase(req.mode()) ? "DRILL"
+                : req.questionIds() != null && !req.questionIds().isEmpty() ? "RETRY" : "LESSON";
         QuizAttempt attempt = attempts.save(new QuizAttempt(userId, concept.getId(),
-                ordered.stream().map(QuizQuestion::getId).toList()));
+                ordered.stream().map(QuizQuestion::getId).toList(), mode));
         return new AttemptView(attempt.getId(), concept.getSlug(), ordered.stream().map(this::view).toList());
     }
 
@@ -94,6 +103,7 @@ public class QuizService {
             correct = req.answer() != null && Grader.matches(q, req.answer());
         }
         answers.save(new QuizAnswer(attemptId, q.getId(), req.answer(), correct, req.hintsUsed()));
+        reviews.onQuizAnswered(userId, q, correct, req.answer());
         return new AnswerResult(correct, q.getCorrectAnswer(), q.getExplanationMd());
     }
 
@@ -125,9 +135,13 @@ public class QuizService {
 
         ConceptProgress p = learn.progressFor(userId, attempt.getConceptId());
         p.markViewed();
-        p.setMastery(Grader.nextMastery(hadPrior ? p.getMastery() : null, weightedPct));
+        // A one-question daily drill is practice, not a measurement — it must not swing concept mastery.
+        if (!"DRILL".equals(attempt.getMode())) {
+            p.setMastery(Grader.nextMastery(hadPrior ? p.getMastery() : null, weightedPct));
+        }
         progressRepo.save(p);
         activity.recordCompletion(userId);
+        events.publishEvent(new ProgressEvent(userId));
 
         return new FinishResult(score, total, pct, p.getMastery(), incorrect);
     }

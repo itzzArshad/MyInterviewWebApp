@@ -19,7 +19,7 @@ export function middleware(req: NextRequest) {
   }
   if (hasSession && (isLogin || pathname === "/")) {
     const url = req.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/today";
     url.search = "";
     return NextResponse.redirect(url);
   }

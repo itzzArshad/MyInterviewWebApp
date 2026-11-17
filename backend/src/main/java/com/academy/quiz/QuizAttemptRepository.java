@@ -20,4 +20,8 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
 
     @Query("select distinct a.conceptId from QuizAttempt a where a.userId = :userId and a.finishedAt is not null")
     List<Long> findQuizzedConceptIds(@Param("userId") Long userId);
+
+    boolean existsByUserIdAndModeAndFinishedAtGreaterThanEqual(Long userId, String mode, java.time.OffsetDateTime since);
+
+    boolean existsByUserIdAndModeInAndFinishedAtGreaterThanEqual(Long userId, java.util.Collection<String> modes, java.time.OffsetDateTime since);
 }

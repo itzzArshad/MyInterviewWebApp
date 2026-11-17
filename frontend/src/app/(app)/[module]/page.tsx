@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ComingSoon } from "@/components/ComingSoon";
-import { CURRENT_PHASE, NAV } from "@/lib/nav";
+import { NAV } from "@/lib/nav";
 
 // Placeholder pages for modules that ship in later phases. Each gets its own route when built.
-const PLACEHOLDERS = NAV.filter((n) => n.phase > CURRENT_PHASE).map((n) => n.key);
+const PLACEHOLDERS = NAV.filter((n) => !n.available).map((n) => n.key);
 
 export const dynamicParams = false;
 

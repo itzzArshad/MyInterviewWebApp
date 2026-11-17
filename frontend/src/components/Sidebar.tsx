@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import clsx from "clsx";
 import { ChevronRight, ChevronsLeft, LogOut, Search, Settings } from "lucide-react";
-import { CURRENT_PHASE, NAV } from "@/lib/nav";
+import { NAV } from "@/lib/nav";
 import { logout, useMe } from "./UserContext";
 
 interface Props {
@@ -22,7 +22,7 @@ export function Sidebar({ onNavigate, onOpenSearch, onCollapse }: Props) {
   return (
     <nav aria-label="Main" className="flex h-full flex-col bg-bg-subtle text-sm">
       <div className="flex h-12 items-center justify-between px-3">
-        <Link href="/dashboard" onClick={onNavigate} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-bg-hover">
+        <Link href="/today" onClick={onNavigate} className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-bg-hover">
           <span className="flex size-6 items-center justify-center rounded-md bg-fg text-[11px] font-bold text-bg">BA</span>
           <span className="font-semibold">Backend Academy</span>
         </Link>
@@ -51,7 +51,7 @@ export function Sidebar({ onNavigate, onOpenSearch, onCollapse }: Props) {
       <ul className="flex-1 space-y-0.5 overflow-y-auto px-2">
         {NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + "/");
-          const available = item.phase <= CURRENT_PHASE;
+          const available = item.available;
           const isOpen = expanded[item.key];
           const Icon = item.icon;
           return (

@@ -23,7 +23,7 @@ function LoginForm() {
       await api<Me>("/auth/login", { method: "POST", body: JSON.stringify({ username, password }) });
       const next = params.get("next");
       // Only allow internal redirects.
-      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard");
+      router.replace(next && next.startsWith("/") && !next.startsWith("//") ? next : "/today");
       router.refresh();
     } catch (err) {
       setError(

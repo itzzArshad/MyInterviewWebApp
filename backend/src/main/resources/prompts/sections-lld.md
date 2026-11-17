@@ -8,6 +8,6 @@
 ## 8. Walkthrough of a typical flow  → step-by-step trace of a main use case through the code (sequenceDiagram welcome)
 ## 9. Concurrency, edge cases and extensibility  → thread safety, failure cases, how to add new features
 ## 10. Common mistakes in interviews  → what weak answers look like and how to avoid them
-## 11. Interview discussion: follow-up questions and answers  → the follow-ups an interviewer asks, with strong answers
+## 11. Interview discussion: follow-up questions and answers  → 4–6 questions an interviewer asks about this design, each with key points and follow-ups (format below)
 ## 12. Related concepts and patterns  → links to the LLD principles and patterns this problem exercises
 ## 13. Summary and revision notes  → crisp bullet-point cheat sheet for quick revision

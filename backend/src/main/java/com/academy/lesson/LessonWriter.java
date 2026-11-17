@@ -2,6 +2,8 @@ package com.academy.lesson;
 
 import com.academy.curriculum.Concept;
 import com.academy.curriculum.ConceptRepository;
+import com.academy.interview.InterviewItem;
+import com.academy.interview.InterviewItemRepository;
 import com.academy.lesson.LessonParser.ParsedLesson;
 import com.academy.lesson.LessonParser.ParsedQuestion;
 import com.academy.quiz.QuizQuestion;
@@ -26,11 +28,14 @@ public class LessonWriter {
 
     private final ConceptRepository concepts;
     private final QuizQuestionRepository questions;
+    private final InterviewItemRepository interviewItems;
     private final ObjectMapper json;
 
-    public LessonWriter(ConceptRepository concepts, QuizQuestionRepository questions, ObjectMapper json) {
+    public LessonWriter(ConceptRepository concepts, QuizQuestionRepository questions,
+                        InterviewItemRepository interviewItems, ObjectMapper json) {
         this.concepts = concepts;
         this.questions = questions;
+        this.interviewItems = interviewItems;
         this.json = json;
     }
 
@@ -48,7 +53,32 @@ public class LessonWriter {
         c.setUpdatedAt(OffsetDateTime.now());
         Concept saved = concepts.save(c);
         writeQuestions(saved.getId(), p.questions());
+        writeInterviewItems(saved.getId(), p.interview());
         return saved;
+    }
+
+    /** Upserts the lesson's interview Q&As by key; removed ones are deactivated (history keeps pointing at them). */
+    public void writeInterviewItems(Long conceptId, List<LessonParser.ParsedInterviewItem> parsed) {
+        Map<String, InterviewItem> existing = new HashMap<>();
+        interviewItems.findByConceptId(conceptId).forEach(i -> existing.put(i.getItemKey(), i));
+        Set<String> seen = new HashSet<>();
+        int order = 0;
+        for (LessonParser.ParsedInterviewItem pi : parsed) {
+            seen.add(pi.key());
+            InterviewItem item = existing.getOrDefault(pi.key(), new InterviewItem(conceptId, pi.key()));
+            item.setQuestionMd(truncate(pi.question(), 5000));
+            item.setAnswerMd(truncate(pi.answer(), 50000));
+            item.setKeyPointsJson(pi.keyPoints().isEmpty() ? null : toJson(pi.keyPoints()));
+            item.setFollowUpsJson(pi.followUps().isEmpty() ? null : toJson(pi.followUps()));
+            item.setSortOrder(order++);
+            item.setActive(true);
+            interviewItems.save(item);
+        }
+        existing.values().stream().filter(i -> !seen.contains(i.getItemKey())).forEach(i -> i.setActive(false));
+    }
+
+    private static String truncate(String s, int max) {
+        return s.length() <= max ? s : s.substring(0, max);
     }
 
     /** Removes the lesson content but keeps the topic, progress and quiz history. */
@@ -61,6 +91,7 @@ public class LessonWriter {
         c.setContentSource(Concept.ContentSource.USER); // a deleted seed lesson must not come back on restart
         c.setUpdatedAt(OffsetDateTime.now());
         questions.findByConceptId(c.getId()).forEach(q -> q.setActive(false));
+        interviewItems.findByConceptId(c.getId()).forEach(i -> i.setActive(false));
         return concepts.save(c);
     }
 
@@ -78,6 +109,7 @@ public class LessonWriter {
             q.setCodeSnippet(pq.code());
             q.setOptionsJson(pq.options() == null ? null : toJson(pq.options()));
             q.setHintsJson(pq.hints().isEmpty() ? null : toJson(pq.hints()));
+            q.setKeyPointsJson(pq.keyPoints().isEmpty() ? null : toJson(pq.keyPoints()));
             q.setCorrectAnswer(pq.correctAnswer());
             q.setExplanationMd(pq.explanation());
             q.setSortOrder(order++);

@@ -29,13 +29,18 @@ public class LearnService {
     private final QuizAttemptRepository attempts;
     private final ActivityService activity;
     private final com.academy.lesson.LessonService lessons;
+    private final com.academy.revision.ReviewService reviews;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public LearnService(PathRepository paths, SubjectRepository subjects, ChapterRepository chapters,
                         ConceptRepository concepts, ConceptProgressRepository progress,
                         QuizQuestionRepository questions, QuizAttemptRepository attempts, ActivityService activity,
-                        com.academy.lesson.LessonService lessons) {
+                        com.academy.lesson.LessonService lessons, com.academy.revision.ReviewService reviews,
+                        org.springframework.context.ApplicationEventPublisher events) {
         this.attempts = attempts;
         this.lessons = lessons;
+        this.reviews = reviews;
+        this.events = events;
         this.paths = paths;
         this.subjects = subjects;
         this.chapters = chapters;
@@ -132,12 +137,20 @@ public class LearnService {
             boolean wasCompleted = p.getStatus() == ConceptProgress.Status.COMPLETED;
             if (!wasCompleted && req.completed()) p.markViewed();
             p.setCompleted(req.completed());
-            if (!wasCompleted && req.completed()) activity.recordCompletion(userId);
+            if (!wasCompleted && req.completed()) {
+                activity.recordCompletion(userId);
+                reviews.onConceptCompleted(userId, p.getConceptId());
+                events.publishEvent(new com.academy.common.ProgressEvent(userId));
+            }
         }
         return ProgressView.of(progress.save(p));
     }
 
     // ---------------------------------------------------------------- helpers shared with other services
+
+    public Map<String, Long> conceptIdsBySlug() {
+        return concepts.findAllSummaries().stream().collect(Collectors.toMap(ConceptSummary::slug, ConceptSummary::id));
+    }
 
     public Concept requirePublished(String slug) {
         return concepts.findBySlug(slug)

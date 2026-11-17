@@ -8,6 +8,6 @@
 ## 8. Real-world backend development use cases  → where it appears in Spring Boot services, APIs, databases, production
 ## 9. Common mistakes and misconceptions  → bugs and wrong mental models, with fixes
 ## 10. Performance considerations and best practices  → costs, complexity, tuning, rules of thumb
-## 11. Interview questions and answers  → 6–10 questions from basic to senior level, with strong answers
+## 11. Interview questions and answers  → 6–10 questions from basic to senior level, each with key points and follow-ups (format below)
 ## 12. Related concepts and dependencies  → what to learn before and after, and how they connect
 ## 13. Summary and revision notes  → crisp bullet-point cheat sheet for quick revision

@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Backend Academy",
     short_name: "Academy",
     description: "Personal Java backend learning and interview preparation",
-    start_url: "/dashboard",
+    start_url: "/today",
     scope: "/",
     display: "standalone",
     orientation: "portrait-primary",

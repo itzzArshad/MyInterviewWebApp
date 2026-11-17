@@ -88,6 +88,7 @@ See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — Vercel (`learn.arshadarif.i
   Render/Vercel/Neon deployment config
 - [ ] Phase 3 – Personal Notes
 - [ ] Phase 4 – GitHub Integration
-- [ ] Phase 5 – Advanced Learning & Revision
+- [x] **Revision, Today and Interview training**: SM-2 spaced repetition (cards from quizzes, mistakes, lessons and interview practice), mistake journal, cheat sheets, a daily 4-step training session with an honest streak, interview bank from lesson Q&As, explain-out-loud practice with recording and key-point scoring, timed mock interviews with report cards, readiness per area
+- [ ] Phase 5 – Advanced content (Spring, backend, LLD/HLD lessons — written via the master prompt)
 - [ ] ~~Phase 6 – AI Assistant~~ (skipped — free only)
 - [ ] Phase 7 – Stability & Deployment

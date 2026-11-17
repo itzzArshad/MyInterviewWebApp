@@ -13,8 +13,12 @@ public final class DashboardDtos {
                             List<SubjectProgress> subjects,
                             List<ConceptRef> weakAreas,
                             List<ConceptRef> bookmarks,
-                            List<LocalDate> activeDays,
+                            List<ActivityDay> activity,
                             List<ModuleStatus> modules) {
+    }
+
+    /** completed = the daily training session was finished that day (only those count for the streak). */
+    public record ActivityDay(LocalDate date, boolean completed) {
     }
 
     /**

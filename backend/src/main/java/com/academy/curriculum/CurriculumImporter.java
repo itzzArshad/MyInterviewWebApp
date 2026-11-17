@@ -1,5 +1,6 @@
 package com.academy.curriculum;
 
+import com.academy.interview.InterviewItemRepository;
 import com.academy.lesson.LessonKind;
 import com.academy.lesson.LessonParser;
 import com.academy.lesson.LessonParser.ParsedLesson;
@@ -44,10 +45,12 @@ public class CurriculumImporter implements SmartInitializingSingleton {
     private final ConceptRepository concepts;
     private final LessonParser parser;
     private final LessonWriter writer;
+    private final InterviewItemRepository interviewItems;
 
     public CurriculumImporter(ResourceLoader resources, PathRepository paths, SubjectRepository subjects,
                               ChapterRepository chapters, ConceptRepository concepts,
-                              LessonParser parser, LessonWriter writer) {
+                              LessonParser parser, LessonWriter writer, InterviewItemRepository interviewItems) {
+        this.interviewItems = interviewItems;
         this.resources = resources;
         this.paths = paths;
         this.subjects = subjects;
@@ -104,9 +107,24 @@ public class CurriculumImporter implements SmartInitializingSingleton {
                 log.info("Archived concept '{}' (no longer in curriculum.yml)", c.getSlug());
             }
         }
-        long published = concepts.findAllByStatusNot(Concept.Status.ARCHIVED).stream()
-                .filter(c -> c.getStatus() == Concept.Status.PUBLISHED).count();
-        log.info("Curriculum loaded: {} topics ({} lessons published)", seen.size(), published);
+        List<Concept> publishedLessons = concepts.findAllByStatusNot(Concept.Status.ARCHIVED).stream()
+                .filter(c -> c.getStatus() == Concept.Status.PUBLISHED).toList();
+        backfillInterviewItems(publishedLessons);
+        log.info("Curriculum loaded: {} topics ({} lessons published)", seen.size(), publishedLessons.size());
+    }
+
+    /** Lessons saved before the interview bank existed get their Q&As extracted once, without re-publishing. */
+    private void backfillInterviewItems(List<Concept> published) {
+        Set<Long> withItems = new HashSet<>(interviewItems.findConceptIdsWithItems());
+        int filled = 0;
+        for (Concept c : published) {
+            if (withItems.contains(c.getId()) || c.getBodyMd() == null) continue;
+            var items = LessonParser.extractInterview(c.getBodyMd());
+            if (items.isEmpty()) continue;
+            writer.writeInterviewItems(c.getId(), items);
+            filled++;
+        }
+        if (filled > 0) log.info("Interview bank: extracted Q&As from {} existing lessons", filled);
     }
 
     private void importConcept(Chapter chapter, String subjectSlug, String slug, String title, int order) {

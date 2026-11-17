@@ -25,7 +25,16 @@ summary: <one sentence, max 25 words, that makes me want to read the lesson>
    - Java code must compile on Java 21 (unless it deliberately shows a bug — then say so). Include imports when they are not obvious.
    - Use tables for comparisons, > blockquotes for key insights and one-line interview answers, **bold** for key terms.
    - Diagrams: use ```mermaid blocks (flowchart, sequenceDiagram, classDiagram, erDiagram) or ASCII art inside ```text.
-   - In the interview section write every question as a bold line "**Q1. …**" followed by the answer as normal paragraphs.
+   - Interview section — my app turns it into spoken-answer practice, so use exactly this shape for every question:
+
+     **Q1. The question, as an interviewer would ask it?**
+
+     The strong answer in normal paragraphs, structured as: what it is → why it exists → how it works inside → a concrete example → trade-offs or pitfalls.
+
+     - Key points: first point the answer must cover | second point | third point | fourth point
+     - Follow-up: The deeper question the interviewer asks next? → Its short, precise answer
+
+     Give 4–6 key points (short phrases, separated by " | ") and 1–2 follow-ups per question. Number questions Q1, Q2, … and keep the "**Q1. …**" line on its own.
 5. Finish with the heading "## 14. Quiz" followed by exactly ONE quiz block. Fence it with TILDES (~~~quiz … ~~~), not backticks. Inside, write YAML in exactly this schema:
 
 ~~~quiz
@@ -58,6 +67,7 @@ QUIZ RULES
 - TRUE_FALSE: no options; `answer: true` or `answer: false`.
 - PREDICT_OUTPUT: either options + a letter answer, or no options and `answer: |` containing the exact console output.
 - EXPLAIN, INTERVIEW, CODE: no options and no answer. Put a complete model answer / reference solution in `explanation` — I grade myself against it.
+  Also add `keyPoints:` — a list of 4–6 short quoted phrases the answer must cover (my app shows them as a self-scoring checklist).
 - Every question has 1–2 hints and an explanation.
 - Test understanding, not memorisation: internals, trade-offs, edge cases, debugging, and realistic backend scenarios.
 - YAML safety: use `|` block scalars for prompt, code, multi-line answers and explanation. Wrap every option and hint in double quotes (escape inner double quotes as \"). Indent with 2 spaces, never tabs. Inside the quiz block you may use ``` code fences in explanations, but never start a line with ~~~.

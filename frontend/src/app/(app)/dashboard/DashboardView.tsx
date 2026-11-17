@@ -38,14 +38,14 @@ export function DashboardView() {
   const { stats, continueLearning: next } = data;
   const cards = [
     { label: "Overall progress", value: `${stats.overallProgressPct}%`, sub: `${stats.conceptsCompleted} / ${stats.conceptsTotal} lessons`, icon: TrendingUp },
-    { label: "Streak", value: `${stats.streakDays} day${stats.streakDays === 1 ? "" : "s"}`, sub: "Keep it going", icon: Flame },
+    { label: "Streak", value: `${stats.streakDays} day${stats.streakDays === 1 ? "" : "s"}`, sub: "finished training sessions", icon: Flame },
     {
       label: "Quiz average",
       value: stats.quizAveragePct == null ? "—" : `${stats.quizAveragePct}%`,
       sub: stats.quizzesTaken ? `last ${stats.quizzesTaken} quiz${stats.quizzesTaken === 1 ? "" : "zes"}` : "No quizzes yet",
       icon: Gauge,
     },
-    { label: "Interview readiness", value: `${stats.interviewReadinessPct}%`, sub: "avg. mastery of lessons", icon: Target },
+    { label: "Interview readiness", value: `${stats.interviewReadinessPct}%`, sub: `${stats.dueForRevision} card${stats.dueForRevision === 1 ? "" : "s"} due for revision`, icon: Target },
   ];
 
   return (
@@ -118,7 +118,7 @@ export function DashboardView() {
         {/* Activity */}
         <section className="lg:col-span-2">
           <h2 className="mb-4 text-sm font-semibold text-fg-muted">Activity · last 16 weeks</h2>
-          <Heatmap activeDays={data.activeDays} />
+          <Heatmap activity={data.activity} />
         </section>
       </div>
 
@@ -207,23 +207,24 @@ function ConceptList({
   );
 }
 
-/** GitHub-style 16×7 grid. Columns are weeks (oldest → newest), rows Mon→Sun. */
-function Heatmap({ activeDays }: { activeDays: string[] }) {
-  const active = new Set(activeDays);
+/** GitHub-style 16×7 grid. Columns are weeks (oldest → newest), rows Mon→Sun. Strong = session finished. */
+function Heatmap({ activity }: { activity: { date: string; completed: boolean }[] }) {
+  const active = new Set(activity.map((d) => d.date));
+  const done = new Set(activity.filter((d) => d.completed).map((d) => d.date));
   const today = new Date();
   const weeks = 16;
   const dow = (today.getDay() + 6) % 7; // 0 = Monday
   const start = new Date(today);
   start.setDate(today.getDate() - dow - (weeks - 1) * 7);
 
-  const cols: { date: string; future: boolean; on: boolean }[][] = [];
+  const cols: { date: string; future: boolean; on: boolean; done: boolean }[][] = [];
   for (let w = 0; w < weeks; w++) {
     const col = [];
     for (let d = 0; d < 7; d++) {
       const dt = new Date(start);
       dt.setDate(start.getDate() + w * 7 + d);
       const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
-      col.push({ date: iso, future: dt > today, on: active.has(iso) });
+      col.push({ date: iso, future: dt > today, on: active.has(iso), done: done.has(iso) });
     }
     cols.push(col);
   }
@@ -236,16 +237,18 @@ function Heatmap({ activeDays }: { activeDays: string[] }) {
             {col.map((c) => (
               <div
                 key={c.date}
-                title={c.future ? undefined : `${c.date}${c.on ? " · active" : ""}`}
+                title={c.future ? undefined : `${c.date}${c.done ? " · session completed" : c.on ? " · opened" : ""}`}
                 className="aspect-square w-full rounded-[3px]"
-                style={{ background: c.future ? "transparent" : c.on ? "var(--heat-1)" : "var(--heat-0)" }}
+                style={{
+                  background: c.future ? "transparent" : c.done ? "var(--heat-1)" : c.on ? "var(--heat-half)" : "var(--heat-0)",
+                }}
               />
             ))}
           </div>
         ))}
       </div>
       <p className="mt-2 text-xs text-fg-faint">
-        {activeDays.length} active day{activeDays.length === 1 ? "" : "s"}
+        {done.size} session{done.size === 1 ? "" : "s"} completed · {active.size} day{active.size === 1 ? "" : "s"} active
       </p>
     </div>
   );

@@ -19,7 +19,8 @@
   --warning: #cb912f;
   --danger: #d44c47;
   --heat-0: #ebedf0;
-  --heat-1: #9be9a8;
+  --heat-half: #c6e9cc;
+  --heat-1: #40c463;
 }
 
 .dark {
@@ -37,7 +38,8 @@
   --warning: #ffa344;
   --danger: #ff7369;
   --heat-0: #2a2a2a;
-  --heat-1: #2e7d4f;
+  --heat-half: #24452f;
+  --heat-1: #3fa565;
 }
 
 @theme inline {

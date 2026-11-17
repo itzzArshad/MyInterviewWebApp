@@ -184,7 +184,7 @@ export function Quiz({ conceptSlug, questionCount, lastQuiz, codeHtml }: Props) 
 
 // ---------------------------------------------------------------- one question
 
-function QuestionCard({
+export function QuestionCard({
   q,
   codeHtml,
   attemptId,

@@ -41,15 +41,23 @@ public class LessonParser {
     private static final Pattern LETTER = Pattern.compile("^\\(?([A-Za-z])[).:]?(?:\\s.*)?$");
 
     public record ParsedQuestion(String key, Type type, Difficulty difficulty, String prompt, String code,
-                                 List<String> options, String correctAnswer, List<String> hints, String explanation) {
+                                 List<String> options, String correctAnswer, List<String> hints, String explanation,
+                                 List<String> keyPoints) {
         public boolean selfGraded() {
             return correctAnswer == null;
         }
     }
 
+    public record FollowUp(String question, String answer) {
+    }
+
+    /** An interview Q&A from the lesson's interview section. */
+    public record ParsedInterviewItem(String key, String question, String answer, List<String> keyPoints, List<FollowUp> followUps) {
+    }
+
     public record ParsedLesson(String source, String body, Difficulty difficulty, Integer minutes, String summary,
                                List<String> related, List<ParsedQuestion> questions, int numberedSections,
-                               List<String> errors, List<String> warnings) {
+                               List<ParsedInterviewItem> interview, List<String> errors, List<String> warnings) {
         public boolean valid() {
             return errors.isEmpty();
         }
@@ -59,10 +67,10 @@ public class LessonParser {
         List<String> errors = new ArrayList<>();
         List<String> warnings = new ArrayList<>();
         if (raw == null || raw.isBlank()) {
-            return new ParsedLesson("", "", null, null, null, List.of(), List.of(), 0, List.of("The lesson is empty."), List.of());
+            return new ParsedLesson("", "", null, null, null, List.of(), List.of(), 0, List.of(), List.of("The lesson is empty."), List.of());
         }
         if (raw.length() > MAX_LENGTH) {
-            return new ParsedLesson("", "", null, null, null, List.of(), List.of(), 0,
+            return new ParsedLesson("", "", null, null, null, List.of(), List.of(), 0, List.of(),
                     List.of("The lesson is too long (" + raw.length() + " characters, max " + MAX_LENGTH + ")."), List.of());
         }
         String source = normalise(raw);
@@ -147,8 +155,103 @@ public class LessonParser {
             if (!missing.isEmpty()) warnings.add("Missing numbered sections: " + missing + " (expected 1–" + expectedSections + ").");
         }
 
+        List<ParsedInterviewItem> interview = extractInterview(body);
+        if (h2Count > 0 && interview.isEmpty()) {
+            warnings.add("No interview Q&A found (\"**Q1. …**\" lines in the interview section) — this lesson adds nothing to the interview bank.");
+        }
+
         return new ParsedLesson(source, body, difficulty, minutes, summary, related, questions, numbers.size(),
-                List.copyOf(errors), List.copyOf(warnings));
+                interview, List.copyOf(errors), List.copyOf(warnings));
+    }
+
+    // ---------------------------------------------------------------- interview section
+
+    private static final Pattern INTERVIEW_H2 = Pattern.compile("^##\\s+(?:\\d{1,2}\\.\\s*)?.*interview.*$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern QA_START = Pattern.compile(
+            "^(?:\\*\\*\\s*Q(\\d{1,3})[.:)]\\s*(.+?)\\s*\\*\\*|#{3,4}\\s*Q(\\d{1,3})[.:)]\\s*(.+?))\\s*$");
+    private static final Pattern KEY_POINTS = Pattern.compile("^\\s*[-*]?\\s*\\**\\s*Key points\\s*:?\\s*\\**\\s*:?\\s*(.*)$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern FOLLOW_UP = Pattern.compile("^\\s*[-*]?\\s*\\**\\s*Follow-?up\\s*:?\\s*\\**\\s*:?\\s*(.*)$", Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Finds the lesson's interview section (an H2 whose title mentions "interview") and splits it into
+     * Q&As. Each question starts with a bold "**Q1. …**" (or "### Q1. …") line; optional lines
+     * "- Key points: a | b | c" and "- Follow-up: question? → answer" are pulled out of the answer.
+     */
+    /** Markdown of the first H2 section whose title contains {@code word} (e.g. "Summary"), or null. */
+    public static String section(String body, String word) {
+        if (body == null) return null;
+        StringBuilder out = new StringBuilder();
+        boolean in = false, fence = false;
+        String w = word.toLowerCase(Locale.ROOT);
+        for (String line : body.split("\n", -1)) {
+            if (FENCE.matcher(line).matches()) fence = !fence;
+            if (!fence && H2.matcher(line).matches()) {
+                if (in) break;
+                in = line.toLowerCase(Locale.ROOT).contains(w);
+                continue;
+            }
+            if (in) out.append(line).append('\n');
+        }
+        String s = out.toString().strip();
+        return s.isEmpty() ? null : s;
+    }
+
+    public static List<ParsedInterviewItem> extractInterview(String body) {
+        List<String> section = new ArrayList<>();
+        boolean in = false, fence = false;
+        for (String line : body.split("\n", -1)) {
+            if (FENCE.matcher(line).matches()) fence = !fence;
+            if (!fence && H2.matcher(line).matches()) {
+                if (in) break;
+                in = INTERVIEW_H2.matcher(line).matches();
+                continue;
+            }
+            if (in) section.add(line);
+        }
+
+        List<ParsedInterviewItem> items = new ArrayList<>();
+        Set<String> keys = new HashSet<>();
+        String key = null, question = null;
+        List<String> answer = new ArrayList<>();
+        List<String> keyPoints = new ArrayList<>();
+        List<FollowUp> followUps = new ArrayList<>();
+        fence = false;
+        for (String line : section) {
+            if (FENCE.matcher(line).matches()) fence = !fence;
+            Matcher m = fence ? null : QA_START.matcher(line.strip());
+            if (m != null && m.matches()) {
+                addItem(items, keys, key, question, answer, keyPoints, followUps);
+                key = "Q" + (m.group(1) != null ? m.group(1) : m.group(3));
+                question = (m.group(2) != null ? m.group(2) : m.group(4)).strip();
+                answer = new ArrayList<>();
+                keyPoints = new ArrayList<>();
+                followUps = new ArrayList<>();
+                continue;
+            }
+            if (key == null) continue;
+            Matcher kp = fence ? null : KEY_POINTS.matcher(line);
+            Matcher fu = fence ? null : FOLLOW_UP.matcher(line);
+            if (kp != null && kp.matches()) {
+                for (String p : kp.group(1).split("\\s*[|;]\\s*")) if (!p.isBlank()) keyPoints.add(p.strip());
+            } else if (fu != null && fu.matches()) {
+                String[] qa = fu.group(1).split("\\s*(?:→|->)\\s*", 2);
+                followUps.add(new FollowUp(qa[0].strip(), qa.length > 1 ? qa[1].strip() : ""));
+            } else {
+                answer.add(line);
+            }
+        }
+        addItem(items, keys, key, question, answer, keyPoints, followUps);
+        return items;
+    }
+
+    private static void addItem(List<ParsedInterviewItem> items, Set<String> keys, String key, String question,
+                                List<String> answer, List<String> keyPoints, List<FollowUp> followUps) {
+        if (key == null) return;
+        String text = String.join("\n", answer).strip();
+        if (text.isEmpty() || question.isEmpty()) return;
+        String unique = key;
+        for (int i = 2; !keys.add(unique); i++) unique = key + "-" + i;
+        items.add(new ParsedInterviewItem(unique, question, text, List.copyOf(keyPoints), List.copyOf(followUps)));
     }
 
     // ---------------------------------------------------------------- quiz
@@ -228,8 +331,10 @@ public class LessonParser {
             if (answer == null && explanation.isBlank()) {
                 errors.add(where + ": self-graded questions need a model answer in 'explanation'.");
             }
+            Object kp = q.containsKey("keyPoints") ? q.get("keyPoints") : q.get("key_points");
+            List<String> keyPoints = kp instanceof List<?> kl ? kl.stream().map(o -> String.valueOf(o).strip()).filter(s -> !s.isEmpty()).toList() : List.of();
             result.add(new ParsedQuestion(key, type, difficulty, prompt == null ? "" : prompt.strip(), stripTrailingNewline(str(q.get("code"))),
-                    options, answer, hints, explanation.strip()));
+                    options, answer, hints, explanation.strip(), keyPoints));
         }
         return result;
     }

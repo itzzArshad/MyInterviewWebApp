@@ -9,5 +9,5 @@
 ## 9. Scaling the system  → caching, replication, sharding/partitioning, queues, CDN, load balancing
 ## 10. Trade-offs and alternatives  → decisions made, alternatives rejected, CAP/consistency trade-offs
 ## 11. Reliability, failure handling and monitoring  → single points of failure, retries, idempotency, observability
-## 12. Interview discussion: follow-up questions and answers  → how the interviewer pushes deeper, with strong answers
+## 12. Interview discussion: follow-up questions and answers  → 4–6 questions an interviewer asks about this design, each with key points and follow-ups (format below)
 ## 13. Summary and revision notes  → crisp bullet-point cheat sheet for quick revision

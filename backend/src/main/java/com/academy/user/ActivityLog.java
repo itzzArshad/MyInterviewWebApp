@@ -4,7 +4,10 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
-/** One row per day the user was active. Powers the streak and the activity heatmap. */
+/**
+ * One row per day the user opened the app. {@code sessionCompleted} marks days where the daily
+ * training session was finished — only those count toward the streak.
+ */
 @Entity
 @Table(name = "activity_log", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "activity_date"}))
 public class ActivityLog {
@@ -25,6 +28,9 @@ public class ActivityLog {
     @Column(name = "items_completed", nullable = false)
     private int itemsCompleted;
 
+    @Column(name = "session_completed", nullable = false)
+    private boolean sessionCompleted;
+
     protected ActivityLog() {
     }
 
@@ -36,4 +42,6 @@ public class ActivityLog {
     public LocalDate getActivityDate() { return activityDate; }
     public int getMinutes() { return minutes; }
     public int getItemsCompleted() { return itemsCompleted; }
+    public boolean isSessionCompleted() { return sessionCompleted; }
+    public void setSessionCompleted(boolean sessionCompleted) { this.sessionCompleted = sessionCompleted; }
 }

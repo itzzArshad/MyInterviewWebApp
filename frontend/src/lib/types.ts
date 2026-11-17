@@ -51,7 +51,7 @@ export interface Dashboard {
   subjects: SubjectProgress[];
   weakAreas: ConceptRef[];
   bookmarks: ConceptRef[];
-  activeDays: string[]; // ISO dates, newest first
+  activity: { date: string; completed: boolean }[]; // newest first; completed = training session finished
   modules: ModuleStatus[];
 }
 
@@ -221,4 +221,201 @@ export interface FinishResult {
   pct: number;
   mastery: number;
   incorrectQuestionIds: number[];
+}
+
+// ---------------------------------------------------------------- revision
+export interface ReviewCardView {
+  id: number;
+  type: "QUIZ" | "EXPLAIN" | "INTERVIEW";
+  conceptSlug: string;
+  conceptTitle: string;
+  bookmarked: boolean;
+  overdueDays: number;
+  prompt: string;
+  code: string | null;
+  options: string[] | null;
+  correctOption: number | null;
+  answer: string | null;
+  explanation: string | null;
+  keyPoints: string[];
+  nextIntervals: Record<string, string>;
+}
+
+export interface RevisionStats {
+  dueNow: number;
+  reviewedToday: number;
+  dailyGoal: number;
+  totalCards: number;
+  openMistakes: number;
+  retentionPct: number | null;
+}
+
+export interface ReviewQueue {
+  cards: ReviewCardView[];
+  stats: RevisionStats;
+}
+
+export interface GradeResult {
+  intervalDays: number;
+  dueAt: string;
+  nextLabel: string;
+  stats: RevisionStats;
+}
+
+export interface MistakeView {
+  id: number;
+  conceptSlug: string;
+  conceptTitle: string;
+  prompt: string;
+  code: string | null;
+  yourAnswer: string | null;
+  correctAnswer: string | null;
+  explanation: string;
+  times: number;
+  note: string | null;
+  resolved: boolean;
+  lastWrongAt: string;
+}
+
+export interface SummaryView {
+  slug: string;
+  title: string;
+  subjectTitle: string;
+  summary: string | null;
+  notesMd: string | null;
+  retentionPct: number | null;
+}
+
+// ---------------------------------------------------------------- interview
+export interface FollowUp {
+  question: string;
+  answer: string;
+}
+
+export interface InterviewQuestion {
+  key: string;
+  conceptSlug: string;
+  conceptTitle: string;
+  subjectSlug: string;
+  subjectTitle: string;
+  question: string;
+  code: string | null;
+  options: string[] | null;
+  autoGraded: boolean;
+  modelAnswer: string;
+  keyPoints: string[];
+  followUps: FollowUp[];
+  limitSec: number;
+}
+
+export interface BankItem {
+  key: string;
+  conceptSlug: string;
+  conceptTitle: string;
+  subjectSlug: string;
+  subjectTitle: string;
+  question: string;
+  attempts: number;
+  bestScore: number | null;
+  lastScore: number | null;
+  due: boolean;
+}
+
+export interface PracticePayload {
+  key: string;
+  durationSec: number;
+  covered?: number[];
+  followUpOk?: boolean | null;
+  note?: string;
+  chosen?: string;
+}
+
+export interface PracticeResult {
+  scorePct: number;
+  pointsCovered: number;
+  pointsTotal: number;
+  correctAnswer: string | null;
+  nextReview: string | null;
+}
+
+export interface AreaReadiness {
+  subjectSlug: string;
+  subjectTitle: string;
+  readinessPct: number;
+  coveragePct: number;
+  retentionPct: number;
+  deliveryPct: number;
+  completed: number;
+  total: number;
+  advice: string;
+}
+
+export interface Readiness {
+  overallPct: number;
+  areas: AreaReadiness[];
+}
+
+export interface MockSummary {
+  id: number;
+  finishedAt: string;
+  scorePct: number | null;
+  questions: number;
+}
+
+export interface InterviewHub {
+  readiness: Readiness;
+  bankSize: number;
+  nextExplainKey: string | null;
+  recentMocks: MockSummary[];
+}
+
+export interface MockView {
+  id: number;
+  startedAt: string;
+  finishedAt: string | null;
+  questions: InterviewQuestion[];
+  answeredKeys: string[];
+}
+
+export interface MockItemResult {
+  key: string;
+  question: string;
+  subjectTitle: string;
+  conceptSlug: string;
+  scorePct: number | null;
+  durationSec: number;
+  limitSec: number;
+  followUpOk: boolean | null;
+  answered: boolean;
+}
+
+export interface MockReport {
+  id: number;
+  startedAt: string;
+  finishedAt: string | null;
+  scorePct: number | null;
+  areas: { subjectSlug: string; subjectTitle: string; scorePct: number; questions: number }[];
+  items: MockItemResult[];
+  advice: string[];
+}
+
+// ---------------------------------------------------------------- today
+export interface TodayStep {
+  key: "revise" | "learn" | "think" | "explain";
+  title: string;
+  description: string;
+  done: boolean;
+  detail: string;
+}
+
+export interface TodayView {
+  date: string;
+  completed: boolean;
+  streak: number;
+  steps: TodayStep[];
+  revision: RevisionStats;
+  learn: ContinueItem | null;
+  drill: { questionId: number; conceptSlug: string; conceptTitle: string; type: string } | null;
+  explainKey: string | null;
+  explainQuestion: string | null;
 }
